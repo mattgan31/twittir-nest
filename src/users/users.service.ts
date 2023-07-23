@@ -10,7 +10,7 @@ export class UserService {
   constructor(
     @InjectRepository(Users) private userRepo: Repository<Users>,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   public async validateUser(username: string, password: string) {
     const user = await this.userRepo.findOne({

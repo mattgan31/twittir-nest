@@ -6,18 +6,12 @@ export declare class PostsService {
     private postService;
     private commentService;
     constructor(postService: Repository<Posts>, commentService: Repository<Comments>);
-    findAll(): Promise<PostInterface[]>;
+    findAll(): Promise<{
+        posts: PostInterface[];
+    }>;
     createPost(post: string, user: any): Promise<any>;
     getPostById(id: number): Promise<{
-        result: {
-            id: number;
-            post: string;
-            updatedAt: Date;
-            user: {
-                id: number;
-                username: string;
-            };
-        };
+        posts: PostInterface;
     }>;
     createComment(comment: string, user: any, postId: number): Promise<any>;
 }

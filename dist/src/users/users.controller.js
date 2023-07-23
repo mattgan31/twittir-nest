@@ -23,6 +23,9 @@ let UserController = exports.UserController = class UserController {
     async signIn(req) {
         return this.userService.signin(req.user);
     }
+    async getProfile(req) {
+        return req.user;
+    }
     async getUserById(id) {
         return this.userService.getUserById(id);
     }
@@ -35,6 +38,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "signIn", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Get)('profile'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "getProfile", null);
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     (0, common_1.Get)(':id'),

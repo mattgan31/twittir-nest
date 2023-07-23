@@ -25,20 +25,37 @@ let PostsService = exports.PostsService = class PostsService {
     }
     async findAll() {
         const posts = await this.postService.find({
-            relations: ['user'],
+            relations: ['user', 'comment', 'comment.user'],
             order: {
                 createdAt: 'DESC',
             },
         });
-        return posts.map((post) => ({
-            id: post.id,
-            post: post.post,
-            updatedAt: post.updatedAt,
-            user: {
-                id: post.user.id,
-                username: post.user.username,
-            },
-        }));
+        const formattedPosts = posts.map((post) => {
+            const comments = Array.isArray(post.comment) && post.comment.length > 0
+                ? post.comment.map((comment) => ({
+                    id: comment.id,
+                    description: comment.description,
+                    userId: comment.userId,
+                    postId: comment.postId,
+                    createdAt: comment.createdAt,
+                    user_comment: {
+                        id: comment.user.id,
+                        username: comment.user.username,
+                    },
+                }))
+                : [];
+            return {
+                id: post.id,
+                post: post.post,
+                createdAt: post.createdAt,
+                user: {
+                    id: post.user.id,
+                    username: post.user.username,
+                },
+                comments: comments,
+            };
+        });
+        return { posts: formattedPosts };
     }
     async createPost(post, user) {
         try {
@@ -56,24 +73,37 @@ let PostsService = exports.PostsService = class PostsService {
     }
     async getPostById(id) {
         const post = await this.postService.findOne({
-            where: [
-                {
-                    id: id,
-                },
-            ],
+            where: [{ id: id }],
             relations: ['user', 'comment', 'comment.user'],
         });
-        return {
-            result: {
-                id: post.id,
-                post: post.post,
-                updatedAt: post.updatedAt,
-                user: {
-                    id: post.user.id,
-                    username: post.user.username,
+        if (!post) {
+            throw new common_1.NotFoundException('Data post not found');
+        }
+        let comments = [];
+        if (Array.isArray(post.comment)) {
+            comments = post.comment.map((comment) => ({
+                id: comment.id,
+                description: comment.description,
+                userId: comment.userId,
+                postId: comment.postId,
+                createdAt: comment.createdAt,
+                user_comment: {
+                    id: comment.user.id,
+                    username: comment.user.username,
                 },
+            }));
+        }
+        const postWithFormattedComments = {
+            id: post.id,
+            post: post.post,
+            createdAt: post.createdAt,
+            user: {
+                id: post.user.id,
+                username: post.user.username,
             },
+            comments: comments,
         };
+        return { posts: postWithFormattedComments };
     }
     async createComment(comment, user, postId) {
         try {
