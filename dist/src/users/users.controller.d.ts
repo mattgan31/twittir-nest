@@ -5,6 +5,7 @@ export declare class UserController {
     signIn(req: any): Promise<{
         token: string;
     }>;
+    getProfile(req: any): Promise<any>;
     getUserById(id: number): Promise<{
         id: number;
         username: string;

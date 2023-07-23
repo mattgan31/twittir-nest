@@ -1,8 +1,10 @@
 import { UsersInterface } from '../users/users.interface';
+import { CommentInterface } from './comments/comments.interface';
 
 export interface PostInterface {
   id: number;
   post: string;
-  updatedAt: Date;
+  createdAt: Date;
   user: UsersInterface;
+  comments: CommentInterface[];
 }
