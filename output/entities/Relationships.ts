@@ -1,29 +1,30 @@
 import {
   Column,
-  CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+} from "typeorm";
+import { Users } from "./Users";
 
-@Index('relationships_pkey', ['id'], { unique: true })
-@Entity('relationships', { schema: 'public' })
+@Index("relationships_pkey", ["id"], { unique: true })
+@Entity("relationships", { schema: "public" })
 export class Relationships {
-  @PrimaryGeneratedColumn({ type: 'integer', name: 'id' })
+  @PrimaryGeneratedColumn({ type: "integer", name: "id" })
   id: number;
 
-  @Column('integer', { name: 'followerId', nullable: true })
-  followerId: number | null;
-
-  @Column('integer', { name: 'followingId', nullable: true })
-  followingId: number | null;
-
-  // @Column('timestamp with time zone', { name: 'createdAt' })
-  @CreateDateColumn()
+  @Column("timestamp with time zone", { name: "createdAt" })
   createdAt: Date;
 
-  // @Column('timestamp with time zone', { name: 'updatedAt' })
-  @UpdateDateColumn()
+  @Column("timestamp with time zone", { name: "updatedAt" })
   updatedAt: Date;
+
+  @ManyToOne(() => Users, (users) => users.relationships)
+  @JoinColumn([{ name: "followerId", referencedColumnName: "id" }])
+  follower: Users;
+
+  @ManyToOne(() => Users, (users) => users.relationships2)
+  @JoinColumn([{ name: "followingId", referencedColumnName: "id" }])
+  following: Users;
 }

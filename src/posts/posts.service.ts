@@ -23,12 +23,12 @@ export class PostsService {
 
     const formattedPosts: PostInterface[] = posts.map((post) => {
       const comments: CommentInterface[] =
-        Array.isArray(post.comment) && post.comment.length > 0
-          ? post.comment.map((comment) => ({
+        post.comments && post.comments.length > 0
+          ? post.comments.map((comment) => ({
             id: comment.id,
             description: comment.description,
-            userId: comment.userId,
-            postId: comment.postId,
+            userId: comment.user.id,
+            postId: comment.post.id,
             createdAt: comment.createdAt,
             user_comment: {
               id: comment.user.id,
@@ -79,12 +79,12 @@ export class PostsService {
     }
 
     let comments: CommentInterface[] = [];
-    if (Array.isArray(post.comment)) {
-      comments = post.comment.map((comment) => ({
+    if (Array.isArray(post.comments)) {
+      comments = post.comments.map((comment) => ({
         id: comment.id,
         description: comment.description,
-        userId: comment.userId,
-        postId: comment.postId,
+        userId: comment.user.id,
+        postId: comment.post.id,
         createdAt: comment.createdAt,
         user_comment: {
           id: comment.user.id,
