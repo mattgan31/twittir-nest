@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Req,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -26,6 +27,13 @@ export class PostsController {
     const { user } = req;
     return this.postService.createPost(post, user);
   }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('followed')
+  public async getPostFollowedByUser(@Req() req: any) {
+    return this.postService.getPostFollowedByUser(req.user);
+  }
+
 
   @UseGuards(AuthGuard('jwt'))
   @Get(':id')

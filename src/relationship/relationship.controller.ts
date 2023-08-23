@@ -9,6 +9,6 @@ export class RelationshipController {
     @UseGuards(AuthGuard('jwt'))
     @Post(':user_id/follow')
     public async followUser(@Param() param: any, @Request() req: any) {
-        return this.relationshipService.followUser(param.user_id, req.user);
+        return this.relationshipService.followUser(parseInt(param.user_id), req.user);
     }
 }
