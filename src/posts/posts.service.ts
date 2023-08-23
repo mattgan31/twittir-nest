@@ -5,17 +5,22 @@ import { Repository } from 'typeorm';
 import { PostInterface } from './posts.interface';
 import { Comments } from 'output/entities/Comments';
 import { CommentInterface } from './comments/comments.interface';
+import { Relationships } from 'output/entities/Relationships';
 
 @Injectable()
 export class PostsService {
   constructor(
     @InjectRepository(Posts) private postService: Repository<Posts>,
     @InjectRepository(Comments) private commentService: Repository<Comments>,
+    @InjectRepository(Relationships) private relationshipService: Repository<Relationships>
   ) { }
 
   public async findAll(): Promise<{ posts: PostInterface[] }> {
     const posts = await this.postService.find({
-      relations: ['user', 'comment', 'comment.user'],
+      relations: {
+        user: true,
+        comments: { user: true }
+      },
       order: {
         createdAt: 'DESC',
       },
@@ -27,10 +32,8 @@ export class PostsService {
           ? post.comments.map((comment) => ({
             id: comment.id,
             description: comment.description,
-            userId: comment.user.id,
-            postId: comment.post.id,
             createdAt: comment.createdAt,
-            user_comment: {
+            user: {
               id: comment.user.id,
               username: comment.user.username,
             },
@@ -83,10 +86,8 @@ export class PostsService {
       comments = post.comments.map((comment) => ({
         id: comment.id,
         description: comment.description,
-        userId: comment.user.id,
-        postId: comment.post.id,
         createdAt: comment.createdAt,
-        user_comment: {
+        user: {
           id: comment.user.id,
           username: comment.user.username,
         },
@@ -107,6 +108,77 @@ export class PostsService {
     return { posts: postWithFormattedComments };
   }
 
+  public async getPostFollowedByUser(user: any): Promise<{ posts: PostInterface[] }> {
+
+    try {
+      const followedUsers = await this.relationshipService.find({
+        where: { follower: user },
+        relations: { following: true }
+      });
+
+      const userIds = followedUsers.map((item) => (
+        item.following.id
+      ))
+
+      const posts = await this.postService.createQueryBuilder('posts')
+        .select([
+          'posts.id AS "id"',
+          'posts.post AS "post"',
+          'posts.createdAt AS "createdAt"',
+          'user.id AS "userId"',
+          'user.username AS "userUsername"',
+          'comments.id AS "commentId"',
+          'comments.description AS "commentDescription"',
+          'comments.createdAt AS "commentCreatedAt"',
+          'commentUser.id AS "commentUserId"',
+          'commentUser.username AS "commentUserUsername"',
+        ])
+        .leftJoin('posts.user', 'user')
+        .leftJoin('posts.comments', 'comments')
+        .leftJoin('comments.user', 'commentUser')
+        .where('user.id IN (:...userIds)', { userIds })
+        .orderBy('posts.createdAt', 'DESC')
+        .getRawMany();
+
+      const transformedPosts: PostInterface[] = []
+      let currentPosts: PostInterface | undefined = undefined;
+
+      for (const row of posts) {
+        if (!currentPosts || currentPosts.id !== row.id) {
+          currentPosts = {
+            id: row.id,
+            post: row.post,
+            createdAt: row.createdAt,
+            user: {
+              id: row.userId,
+              username: row.userUsername
+            },
+            comments: [],
+          }
+          transformedPosts.push(currentPosts);
+        }
+
+        if (row.commentId) {
+          currentPosts.comments.push({
+            id: row.commentId,
+            description: row.commentDescription,
+            createdAt: row.commentCreatedAt,
+            user: {
+              id: row.commentUserId,
+              username: row.commentUserUsername
+            }
+          });
+        }
+      }
+
+      return {
+        posts: transformedPosts
+      }
+    } catch (error) {
+      console.log(error);
+      return error;
+    }
+  }
 
   // Comment session
   public async createComment(comment: string, user: any, postId: number) {
