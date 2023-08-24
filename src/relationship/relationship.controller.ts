@@ -2,7 +2,7 @@ import { Controller, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { RelationshipService } from './relationship.service';
 import { AuthGuard } from '@nestjs/passport';
 
-@Controller('users')
+@Controller('api/users')
 export class RelationshipController {
     constructor(private readonly relationshipService: RelationshipService) { }
 

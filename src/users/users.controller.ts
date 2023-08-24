@@ -9,7 +9,7 @@ import {
 import { UserService } from './users.service';
 import { AuthGuard } from '@nestjs/passport';
 
-@Controller('users')
+@Controller('api')
 export class UserController {
   constructor(private readonly userService: UserService) { }
 
@@ -26,7 +26,7 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get(':id')
+  @Get('users/:id')
   public async getUserById(@Param('id') id: number) {
     return this.userService.getUserById(id);
   }
