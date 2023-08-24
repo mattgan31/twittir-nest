@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Relationships } from 'output/entities/Relationships';
 import { Users } from 'output/entities/Users';
@@ -16,6 +16,11 @@ export class RelationshipService {
         const otherUser = await this.userRepo.findOne({ where: { id: user_id } });
 
         try {
+
+            if (!otherUser) {
+                throw new NotFoundException(`User with ID ${user_id} is not found`)
+            }
+
             if (user_id === user.id) {
                 throw new ForbiddenException("You cannot follow yourself")
             }
