@@ -116,6 +116,10 @@ export class PostsService {
         relations: { following: true }
       });
 
+      if (followedUsers.length < 1) {
+        throw new NotFoundException("You are not following anyone")
+      }
+
       const userIds = followedUsers.map((item) => (
         item.following.id
       ))
@@ -175,8 +179,7 @@ export class PostsService {
         posts: transformedPosts
       }
     } catch (error) {
-      console.log(error);
-      return error;
+      return error.response;
     }
   }
 
