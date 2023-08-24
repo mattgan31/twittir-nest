@@ -59,12 +59,14 @@ export class PostsService {
 
   public async createPost(post: string, user: any) {
     try {
+
       const newPost = await this.postService.save({
         post,
-        userId: user.id,
+        user,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       });
+
       return newPost;
     } catch (error) {
       return error.message;
@@ -74,7 +76,10 @@ export class PostsService {
   public async getPostById(id: number): Promise<{ posts: PostInterface }> {
     const post = await this.postService.findOne({
       where: [{ id: id }],
-      relations: ['user', 'comment', 'comment.user'],
+      relations: {
+        user: true,
+        comments: { user: true }
+      },
     });
 
     if (!post) {
