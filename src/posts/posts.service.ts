@@ -19,64 +19,69 @@ export class PostsService {
   ) { }
 
   public async findAll(): Promise<{ posts: PostInterface[] }> {
-    const posts = await this.postService.find({
-      relations: {
-        user: true,
-        comments: { user: true },
-        likes: { user: true }
-      },
-      order: {
-        createdAt: 'DESC',
-      },
-    });
-
-    // for (const post of posts) {
-    //   post.likeCount = post.likes.length;
-    // }
-
-    const formattedPosts: PostInterface[] = posts.map((post) => {
-      const comments: CommentInterface[] =
-        post.comments && post.comments.length > 0
-          ? post.comments.map((comment) => ({
-            id: comment.id,
-            description: comment.description,
-            createdAt: comment.createdAt,
-            user: {
-              id: comment.user.id,
-              username: comment.user.username,
-            },
-            likes: [],
-            likesCount: 0
-          }))
-          : [];
-
-      const likes: LikesInterface[] =
-        post.likes && post.likes.length > 0 ?
-          post.likes.map((like) => ({
-            id: like.id,
-            user: {
-              id: like.user.id,
-              username: like.user.username
-            }
-          })) : []
-
-      return {
-        id: post.id,
-        post: post.post,
-        createdAt: post.createdAt,
-        user: {
-          id: post.user.id,
-          username: post.user.username,
+    try {
+      const posts = await this.postService.find({
+        relations: {
+          user: true,
+          comments: { user: true },
+          likes: { user: true }
         },
-        comments,
-        likes,
-        likesCount: post.likes.length
-        // Add other properties from the related entity as needed
-        // For example: user: post.user,
-      };
-    });
+        order: {
+          createdAt: 'DESC',
+        },
+      });
 
-    return { posts: formattedPosts };
+      if (!posts) {
+        throw new NotFoundException("Posts is not available")
+      }
+
+      const formattedPosts: PostInterface[] = posts.map((post) => {
+        const comments: CommentInterface[] =
+          post.comments && post.comments.length > 0
+            ? post.comments.map((comment) => ({
+              id: comment.id,
+              description: comment.description,
+              createdAt: comment.createdAt,
+              user: {
+                id: comment.user.id,
+                username: comment.user.username,
+              },
+              likes: [],
+              likesCount: 0
+            }))
+            : [];
+
+        const likes: LikesInterface[] =
+          post.likes && post.likes.length > 0 ?
+            post.likes.map((like) => ({
+              id: like.id,
+              user: {
+                id: like.user.id,
+                username: like.user.username
+              }
+            })) : []
+
+        return {
+          id: post.id,
+          post: post.post,
+          createdAt: post.createdAt,
+          user: {
+            id: post.user.id,
+            username: post.user.username,
+          },
+          comments,
+          likes,
+          likesCount: post.likes.length
+          // Add other properties from the related entity as needed
+          // For example: user: post.user,
+        };
+      });
+
+      return { posts: formattedPosts };
+
+    } catch (error) {
+      throw error;
+    }
   }
 
   public async createPost(post: string, user: any) {
@@ -96,58 +101,62 @@ export class PostsService {
   }
 
   public async getPostById(id: number): Promise<{ posts: PostInterface }> {
-    const post = await this.postService.findOne({
-      where: [{ id }],
-      relations: {
-        user: true,
-        comments: { user: true },
-        likes: { user: true }
-      },
-    });
-
-    if (!post) {
-      throw new NotFoundException('Data post not found');
-    }
-
-    let comments: CommentInterface[] = [];
-    if (Array.isArray(post.comments)) {
-      comments = post.comments.map((comment) => ({
-        id: comment.id,
-        description: comment.description,
-        createdAt: comment.createdAt,
-        user: {
-          id: comment.user.id,
-          username: comment.user.username,
+    try {
+      const post = await this.postService.findOne({
+        where: [{ id }],
+        relations: {
+          user: true,
+          comments: { user: true },
+          likes: { user: true }
         },
-        likes: [],
-        likesCount: 0
-      }));
-    }
+      });
 
-    const likes: LikesInterface[] =
-      post.likes && post.likes.length > 0 ?
-        post.likes.map((like) => ({
-          id: like.id,
+      if (!post) {
+        throw new NotFoundException('Data post not found');
+      }
+
+      let comments: CommentInterface[] = [];
+      if (Array.isArray(post.comments)) {
+        comments = post.comments.map((comment) => ({
+          id: comment.id,
+          description: comment.description,
+          createdAt: comment.createdAt,
           user: {
-            id: like.user.id,
-            username: like.user.username
-          }
-        })) : []
+            id: comment.user.id,
+            username: comment.user.username,
+          },
+          likes: [],
+          likesCount: 0
+        }));
+      }
 
-    const postWithFormattedComments: PostInterface = {
-      id: post.id,
-      post: post.post,
-      createdAt: post.createdAt,
-      user: {
-        id: post.user.id,
-        username: post.user.username,
-      },
-      comments,
-      likes,
-      likesCount: post.likes.length
-    };
+      const likes: LikesInterface[] =
+        post.likes && post.likes.length > 0 ?
+          post.likes.map((like) => ({
+            id: like.id,
+            user: {
+              id: like.user.id,
+              username: like.user.username
+            }
+          })) : []
 
-    return { posts: postWithFormattedComments };
+      const postWithFormattedComments: PostInterface = {
+        id: post.id,
+        post: post.post,
+        createdAt: post.createdAt,
+        user: {
+          id: post.user.id,
+          username: post.user.username,
+        },
+        comments,
+        likes,
+        likesCount: post.likes.length
+      };
+
+      return { posts: postWithFormattedComments };
+    } catch (error) {
+      throw error;
+    }
   }
 
   public async getPostFollowedByUser(user: any): Promise<{ posts: PostInterface[] }> {
@@ -297,8 +306,6 @@ export class PostsService {
   }
 
   public async likeComment(user: any, commentId: number) {
-
-
     try {
       const comment = await this.commentService.findOne({ where: { id: commentId } })
       if (!comment) {
