@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
@@ -17,6 +18,11 @@ export class UserController {
   @Post('login')
   public async signIn(@Request() req: any) {
     return this.userService.signin(req.user);
+  }
+
+  @Post('register')
+  public async register(@Body() user: any) {
+    return this.userService.register(user);
   }
 
   @UseGuards(AuthGuard('jwt'))
