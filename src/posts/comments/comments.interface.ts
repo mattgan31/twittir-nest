@@ -1,3 +1,4 @@
+import { LikesInterface } from '../likes/likes.interface';
 import { CommentUserInterface } from './commentUser.interface';
 
 export interface CommentInterface {
@@ -5,4 +6,6 @@ export interface CommentInterface {
     description: string;
     createdAt: Date;
     user: CommentUserInterface;
+    likes: LikesInterface[];
+    likesCount: number;
 }

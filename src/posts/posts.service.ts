@@ -6,25 +6,33 @@ import { PostInterface } from './posts.interface';
 import { Comments } from 'output/entities/Comments';
 import { CommentInterface } from './comments/comments.interface';
 import { Relationships } from 'output/entities/Relationships';
+import { LikesInterface } from './likes/likes.interface';
+import { Likes } from 'output/entities/Likes';
 
 @Injectable()
 export class PostsService {
   constructor(
     @InjectRepository(Posts) private postService: Repository<Posts>,
     @InjectRepository(Comments) private commentService: Repository<Comments>,
-    @InjectRepository(Relationships) private relationshipService: Repository<Relationships>
+    @InjectRepository(Relationships) private relationshipService: Repository<Relationships>,
+    @InjectRepository(Likes) private likeService: Repository<Likes>,
   ) { }
 
   public async findAll(): Promise<{ posts: PostInterface[] }> {
     const posts = await this.postService.find({
       relations: {
         user: true,
-        comments: { user: true }
+        comments: { user: true },
+        likes: { user: true }
       },
       order: {
         createdAt: 'DESC',
       },
     });
+
+    // for (const post of posts) {
+    //   post.likeCount = post.likes.length;
+    // }
 
     const formattedPosts: PostInterface[] = posts.map((post) => {
       const comments: CommentInterface[] =
@@ -37,8 +45,20 @@ export class PostsService {
               id: comment.user.id,
               username: comment.user.username,
             },
+            likes: [],
+            likesCount: 0
           }))
           : [];
+
+      const likes: LikesInterface[] =
+        post.likes && post.likes.length > 0 ?
+          post.likes.map((like) => ({
+            id: like.id,
+            user: {
+              id: like.user.id,
+              username: like.user.username
+            }
+          })) : []
 
       return {
         id: post.id,
@@ -48,7 +68,9 @@ export class PostsService {
           id: post.user.id,
           username: post.user.username,
         },
-        comments: comments,
+        comments,
+        likes,
+        likesCount: post.likes.length
         // Add other properties from the related entity as needed
         // For example: user: post.user,
       };
@@ -69,16 +91,17 @@ export class PostsService {
 
       return newPost;
     } catch (error) {
-      return error.message;
+      throw error;
     }
   }
 
   public async getPostById(id: number): Promise<{ posts: PostInterface }> {
     const post = await this.postService.findOne({
-      where: [{ id: id }],
+      where: [{ id }],
       relations: {
         user: true,
-        comments: { user: true }
+        comments: { user: true },
+        likes: { user: true }
       },
     });
 
@@ -96,8 +119,20 @@ export class PostsService {
           id: comment.user.id,
           username: comment.user.username,
         },
+        likes: [],
+        likesCount: 0
       }));
     }
+
+    const likes: LikesInterface[] =
+      post.likes && post.likes.length > 0 ?
+        post.likes.map((like) => ({
+          id: like.id,
+          user: {
+            id: like.user.id,
+            username: like.user.username
+          }
+        })) : []
 
     const postWithFormattedComments: PostInterface = {
       id: post.id,
@@ -107,7 +142,9 @@ export class PostsService {
         id: post.user.id,
         username: post.user.username,
       },
-      comments: comments,
+      comments,
+      likes,
+      likesCount: post.likes.length
     };
 
     return { posts: postWithFormattedComments };
@@ -141,10 +178,16 @@ export class PostsService {
           'comments.createdAt AS "commentCreatedAt"',
           'commentUser.id AS "commentUserId"',
           'commentUser.username AS "commentUserUsername"',
+          'likes.id AS "likeId"',
+          'likeUser.id AS "likeUserId"',
+          'likeUser.username AS "likeUserUsername"'
         ])
         .leftJoin('posts.user', 'user')
         .leftJoin('posts.comments', 'comments')
+        .leftJoin('posts.likes', 'likes')
         .leftJoin('comments.user', 'commentUser')
+        .leftJoin('comments.likes', 'commentLikes')
+        .leftJoin('likes.user', 'likeUser')
         .where('user.id IN (:...userIds)', { userIds })
         .orderBy('posts.createdAt', 'DESC')
         .getRawMany();
@@ -163,6 +206,8 @@ export class PostsService {
               username: row.userUsername
             },
             comments: [],
+            likes: [],
+            likesCount: 0
           }
           transformedPosts.push(currentPosts);
         }
@@ -175,8 +220,20 @@ export class PostsService {
             user: {
               id: row.commentUserId,
               username: row.commentUserUsername
-            }
+            },
+            likes: [],
+            likesCount: 0
           });
+        }
+
+        if (row.likeId) {
+          currentPosts.likes.push({
+            id: row.likeId,
+            user: {
+              id: row.likeUserId,
+              username: row.likeUserUsername
+            }
+          })
         }
       }
 
@@ -184,7 +241,7 @@ export class PostsService {
         posts: transformedPosts
       }
     } catch (error) {
-      return error.response;
+      throw error;
     }
   }
 
@@ -200,7 +257,78 @@ export class PostsService {
       });
       return newComment;
     } catch (error) {
-      return error.message;
+      throw error;
+    }
+  }
+
+  // Like Session
+  public async likePost(user: any, postId: number) {
+    try {
+      const post = await this.postService.findOne({ where: { id: postId } })
+      if (!post) {
+        throw new NotFoundException("The post want you to like is not found")
+      }
+
+      const postIsLikedByUser = await this.likeService.findOne({ where: { user, post } });
+
+      if (!postIsLikedByUser) {
+        await this.likeService.save({
+          post,
+          user
+        });
+
+        return {
+          message: `You are liked post with ${post.id} ID`
+        }
+      } else {
+        await this.likeService.delete({
+          post,
+          user
+        });
+
+        return {
+          message: `You are unlike post with ${post.id} ID`
+        }
+      }
+
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async likeComment(user: any, commentId: number) {
+
+
+    try {
+      const comment = await this.commentService.findOne({ where: { id: commentId } })
+      if (!comment) {
+        throw new NotFoundException("The comment want you to like is not found")
+      }
+
+      const postIsLikedByUser = await this.likeService.findOne({ where: { user, comment } });
+
+      if (!postIsLikedByUser) {
+        await this.likeService.save({
+          comment,
+          user
+        });
+
+        return {
+          message: `You are liked comment with ${comment.id} ID`
+        }
+      } else {
+        await this.likeService.delete({
+          comment,
+          user
+        });
+
+        return {
+          message: `You are unlike comment with ${comment.id} ID`
+        }
+      }
+
+    } catch (error) {
+      throw error;
     }
   }
 }

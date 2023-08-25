@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { Comments } from "./Comments";
+import { Likes } from "./Likes";
 import { Posts } from "./Posts";
 import { Relationships } from "./Relationships";
 
@@ -37,6 +38,9 @@ export class Users {
 
   @OneToMany(() => Comments, (comments) => comments.user)
   comments: Comments[];
+
+  @OneToMany(() => Likes, (likes) => likes.user)
+  likes: Likes[];
 
   @OneToMany(() => Posts, (posts) => posts.user)
   posts: Posts[];

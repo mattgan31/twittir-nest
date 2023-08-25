@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { Comments } from "./Comments";
+import { Likes } from "./Likes";
 import { Users } from "./Users";
 
 @Index("posts_pkey", ["id"], { unique: true })
@@ -27,6 +28,9 @@ export class Posts {
 
   @OneToMany(() => Comments, (comments) => comments.post)
   comments: Comments[];
+
+  @OneToMany(() => Likes, (likes) => likes.post)
+  likes: Likes[];
 
   @ManyToOne(() => Users, (users) => users.posts)
   @JoinColumn([{ name: "userId", referencedColumnName: "id" }])
