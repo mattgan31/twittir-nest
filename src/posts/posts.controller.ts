@@ -52,4 +52,27 @@ export class PostsController {
     const { user } = req;
     return this.postService.createComment(comment, user, postId);
   }
+
+  // Like Session
+  @UseGuards(AuthGuard('jwt'))
+  @Post(':id/like')
+  public async likePost(
+    @Param('id') postId: number,
+    @Request() req: any,
+  ) {
+    const { user } = req;
+    return this.postService.likePost(user, postId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post(':id/comment/like')
+  public async likeComment(
+    @Param('id') commentId: number,
+    @Request() req: any,
+  ) {
+    const { user } = req;
+    return this.postService.likeComment(user, commentId);
+  }
+
+
 }

@@ -4,10 +4,12 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { Posts } from "./Posts";
 import { Users } from "./Users";
+import { Likes } from "./Likes";
 
 @Index("comments_pkey", ["id"], { unique: true })
 @Entity("comments", { schema: "public" })
@@ -35,4 +37,7 @@ export class Comments {
   @ManyToOne(() => Users, (users) => users.comments)
   @JoinColumn([{ name: "userId", referencedColumnName: "id" }])
   user: Users;
+
+  @OneToMany(() => Likes, (likes) => likes.comment)
+  likes: Likes[];
 }

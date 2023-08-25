@@ -14,10 +14,11 @@ import { Comments } from 'output/entities/Comments';
 import { RelationshipService } from 'src/relationship/relationship.service';
 import { RelationshipController } from 'src/relationship/relationship.controller';
 import { Relationships } from 'output/entities/Relationships';
+import { Likes } from 'output/entities/Likes';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Posts, Users, Comments, Relationships]),
+    TypeOrmModule.forFeature([Posts, Users, Comments, Relationships, Likes]),
     PassportModule,
     JwtModule.register({
       secret: 's3kret',
