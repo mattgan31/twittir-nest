@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Users } from '../../output/entities/Users';
@@ -43,5 +43,31 @@ export class UserService {
     } else {
       throw new NotFoundException('User not found');
     }
+  }
+
+  public async register(user: any) {
+
+    if (!user.password || !user.username) {
+      throw new BadRequestException("Username or Password is required")
+    }
+
+    const isUserAvailable = await this.userRepo.findOne({ where: { username: user.username } })
+
+    if (isUserAvailable) {
+      throw new ConflictException("Username is unavailable")
+    }
+
+    const hashPassword = await Bcrypt.hash(user.password, 10);
+
+    const newUser = await this.userRepo.save({
+      username: user.username,
+      password: hashPassword,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    const { ...result } = newUser
+    return result;
+
   }
 }
