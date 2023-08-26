@@ -256,11 +256,12 @@ export class PostsService {
 
   // Comment session
   public async createComment(comment: string, user: any, postId: number) {
+    const post = await this.postService.findOne({ where: { id: postId } })
     try {
       const newComment = await this.commentService.save({
-        postId,
+        post,
         description: comment,
-        userId: user.id,
+        user,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
