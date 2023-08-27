@@ -8,6 +8,5 @@ export interface PostInterface {
   createdAt: Date;
   user: UsersInterface;
   likes: LikesInterface[];
-  likesCount: number;
   comments: CommentInterface[];
 }

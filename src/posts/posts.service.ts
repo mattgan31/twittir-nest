@@ -47,7 +47,6 @@ export class PostsService {
                 username: comment.user.username,
               },
               likes: [],
-              likesCount: 0
             }))
             : [];
 
@@ -71,7 +70,6 @@ export class PostsService {
           },
           comments,
           likes,
-          likesCount: post.likes.length
           // Add other properties from the related entity as needed
           // For example: user: post.user,
         };
@@ -126,7 +124,6 @@ export class PostsService {
             username: comment.user.username,
           },
           likes: [],
-          likesCount: 0
         }));
       }
 
@@ -150,7 +147,6 @@ export class PostsService {
         },
         comments,
         likes,
-        likesCount: post.likes.length
       };
 
       return { posts: postWithFormattedComments };
@@ -216,7 +212,6 @@ export class PostsService {
             },
             comments: [],
             likes: [],
-            likesCount: 0
           }
           transformedPosts.push(currentPosts);
         }
@@ -231,7 +226,6 @@ export class PostsService {
               username: row.commentUserUsername
             },
             likes: [],
-            likesCount: 0
           });
         }
 
