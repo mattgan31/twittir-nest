@@ -7,5 +7,4 @@ export interface CommentInterface {
     createdAt: Date;
     user: CommentUserInterface;
     likes: LikesInterface[];
-    likesCount: number;
 }
