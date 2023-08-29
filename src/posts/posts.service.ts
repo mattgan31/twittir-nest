@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Posts } from '../../output/entities/Posts';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { PostInterface } from './posts.interface';
 import { Comments } from 'output/entities/Comments';
 import { CommentInterface } from './comments/comments.interface';
@@ -23,7 +23,7 @@ export class PostsService {
       const posts = await this.postService.find({
         relations: {
           user: true,
-          comments: { user: true },
+          comments: { user: true, likes: { user: true } },
           likes: { user: true }
         },
         order: {
@@ -46,7 +46,16 @@ export class PostsService {
                 id: comment.user.id,
                 username: comment.user.username,
               },
-              likes: [],
+              // Check if comment has likes
+              ...(comment.likes && comment.likes.length > 0 && {
+                likes: comment.likes.map((like) => ({
+                  id: like.id,
+                  user: {
+                    id: like.user.id,
+                    username: like.user.username
+                  }
+                }))
+              }),
             }))
             : [];
 
@@ -68,12 +77,13 @@ export class PostsService {
             id: post.user.id,
             username: post.user.username,
           },
-          comments,
           likes,
+          comments,
           // Add other properties from the related entity as needed
-          // For example: user: post.user,
+          // For example: likes: post.likes,
         };
       });
+
 
       return { posts: formattedPosts };
 
@@ -104,7 +114,7 @@ export class PostsService {
         where: [{ id }],
         relations: {
           user: true,
-          comments: { user: true },
+          comments: { user: true, likes: { user: true } },
           likes: { user: true }
         },
       });
@@ -123,7 +133,15 @@ export class PostsService {
             id: comment.user.id,
             username: comment.user.username,
           },
-          likes: [],
+          ...(comment.likes && comment.likes.length > 0 && {
+            likes: comment.likes.map((like) => ({
+              id: like.id,
+              user: {
+                id: like.user.id,
+                username: like.user.username
+              }
+            }))
+          }),
         }));
       }
 
@@ -155,94 +173,85 @@ export class PostsService {
     }
   }
 
+  // HERE IS BUG
   public async getPostFollowedByUser(user: any): Promise<{ posts: PostInterface[] }> {
-
     try {
       const followedUsers = await this.relationshipService.find({
         where: { follower: user },
-        relations: { following: true }
+        relations: { following: true },
       });
 
       if (followedUsers.length < 1) {
-        throw new NotFoundException("You are not following anyone")
+        throw new NotFoundException("You are not following anyone");
       }
 
-      const userIds = followedUsers.map((item) => (
-        item.following.id
-      ))
+      const userIds = followedUsers.map((item) => item.following.id);
 
-      const posts = await this.postService.createQueryBuilder('posts')
-        .select([
-          'posts.id AS "id"',
-          'posts.post AS "post"',
-          'posts.createdAt AS "createdAt"',
-          'user.id AS "userId"',
-          'user.username AS "userUsername"',
-          'comments.id AS "commentId"',
-          'comments.description AS "commentDescription"',
-          'comments.createdAt AS "commentCreatedAt"',
-          'commentUser.id AS "commentUserId"',
-          'commentUser.username AS "commentUserUsername"',
-          'likes.id AS "likeId"',
-          'likeUser.id AS "likeUserId"',
-          'likeUser.username AS "likeUserUsername"'
-        ])
-        .leftJoin('posts.user', 'user')
-        .leftJoin('posts.comments', 'comments')
-        .leftJoin('posts.likes', 'likes')
-        .leftJoin('comments.user', 'commentUser')
-        .leftJoin('comments.likes', 'commentLikes')
-        .leftJoin('likes.user', 'likeUser')
-        .where('user.id IN (:...userIds)', { userIds })
-        .orderBy('posts.createdAt', 'DESC')
-        .getRawMany();
+      const posts = await this.postService.find({
+        where: { user: { id: In(userIds) } },
+        relations: {
+          user: true,
+          comments: { user: true, likes: { user: true } },
+          likes: { user: true }
+        },
+        order: { createdAt: 'DESC' }
+      })
 
-      const transformedPosts: PostInterface[] = []
-      let currentPosts: PostInterface | undefined = undefined;
-
-      for (const row of posts) {
-        if (!currentPosts || currentPosts.id !== row.id) {
-          currentPosts = {
-            id: row.id,
-            post: row.post,
-            createdAt: row.createdAt,
-            user: {
-              id: row.userId,
-              username: row.userUsername
-            },
-            comments: [],
-            likes: [],
-          }
-          transformedPosts.push(currentPosts);
-        }
-
-        if (row.commentId) {
-          currentPosts.comments.push({
-            id: row.commentId,
-            description: row.commentDescription,
-            createdAt: row.commentCreatedAt,
-            user: {
-              id: row.commentUserId,
-              username: row.commentUserUsername
-            },
-            likes: [],
-          });
-        }
-
-        if (row.likeId) {
-          currentPosts.likes.push({
-            id: row.likeId,
-            user: {
-              id: row.likeUserId,
-              username: row.likeUserUsername
-            }
-          })
-        }
+      if (!posts) {
+        throw new NotFoundException("Posts is not available")
       }
 
-      return {
-        posts: transformedPosts
-      }
+      const formattedPosts: PostInterface[] = posts.map((post) => {
+        const comments: CommentInterface[] =
+          post.comments && post.comments.length > 0
+            ? post.comments.map((comment) => ({
+              id: comment.id,
+              description: comment.description,
+              createdAt: comment.createdAt,
+              user: {
+                id: comment.user.id,
+                username: comment.user.username,
+              },
+              // Check if comment has likes
+              ...(comment.likes && comment.likes.length > 0 && {
+                likes: comment.likes.map((like) => ({
+                  id: like.id,
+                  user: {
+                    id: like.user.id,
+                    username: like.user.username
+                  }
+                }))
+              }),
+            }))
+            : [];
+
+        const likes: LikesInterface[] =
+          post.likes && post.likes.length > 0 ?
+            post.likes.map((like) => ({
+              id: like.id,
+              user: {
+                id: like.user.id,
+                username: like.user.username
+              }
+            })) : []
+
+        return {
+          id: post.id,
+          post: post.post,
+          createdAt: post.createdAt,
+          user: {
+            id: post.user.id,
+            username: post.user.username,
+          },
+          likes,
+          comments,
+          // Add other properties from the related entity as needed
+          // For example: likes: post.likes,
+        };
+      });
+
+
+      return { posts: formattedPosts };
     } catch (error) {
       throw error;
     }
