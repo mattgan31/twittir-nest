@@ -34,11 +34,16 @@ export class PostsController {
     return this.postService.getPostFollowedByUser(req.user);
   }
 
-
   @UseGuards(AuthGuard('jwt'))
   @Get(':id')
   public async getPostById(@Param('id') id: number) {
     return this.postService.getPostById(id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('user/:id')
+  public async getPostByUserId(@Param('id') id: number) {
+    return this.postService.getPostByUserId(id)
   }
 
   // Comment session
