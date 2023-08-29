@@ -173,6 +173,81 @@ export class PostsService {
     }
   }
 
+  public async getPostByUserId(userId: number) {
+    try {
+      const posts = await this.postService.find({
+        where: { user: { id: userId } },
+        relations: {
+          user: true,
+          comments: { user: true, likes: { user: true } },
+          likes: { user: true }
+        },
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+
+      if (!posts) {
+        throw new NotFoundException("Posts is not available")
+      }
+
+      const formattedPosts: PostInterface[] = posts.map((post) => {
+        const comments: CommentInterface[] =
+          post.comments && post.comments.length > 0
+            ? post.comments.map((comment) => ({
+              id: comment.id,
+              description: comment.description,
+              createdAt: comment.createdAt,
+              user: {
+                id: comment.user.id,
+                username: comment.user.username,
+              },
+              // Check if comment has likes
+              ...(comment.likes && comment.likes.length > 0 && {
+                likes: comment.likes.map((like) => ({
+                  id: like.id,
+                  user: {
+                    id: like.user.id,
+                    username: like.user.username
+                  }
+                }))
+              }),
+            }))
+            : [];
+
+        const likes: LikesInterface[] =
+          post.likes && post.likes.length > 0 ?
+            post.likes.map((like) => ({
+              id: like.id,
+              user: {
+                id: like.user.id,
+                username: like.user.username
+              }
+            })) : []
+
+        return {
+          id: post.id,
+          post: post.post,
+          createdAt: post.createdAt,
+          user: {
+            id: post.user.id,
+            username: post.user.username,
+          },
+          likes,
+          comments,
+          // Add other properties from the related entity as needed
+          // For example: likes: post.likes,
+        };
+      });
+
+
+      return { posts: formattedPosts };
+
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // HERE IS BUG
   public async getPostFollowedByUser(user: any): Promise<{ posts: PostInterface[] }> {
     try {
