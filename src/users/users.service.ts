@@ -74,19 +74,25 @@ export class UserService {
 
   public async getListUser(search: string) {
     try {
-      const userList = await this.userRepo.find({
-        where: { username: Like(`%${search}%`) }
-      })
 
-      const userDtos = userList.map((user: any) => {
-        const userDto = new UserDto();
-        userDto.id = user.id;
-        userDto.username = user.username;
+      if (search === '') {
+        const userList = []
 
-        return userDto;
-      });
+        return { users: userList }
+      } else {
+        const userList = await this.userRepo.find({
+          where: { username: Like(`${search}%`) }
+        })
 
-      return { users: userDtos };
+        const userDtos = userList.map((user: any) => {
+          const userDto = new UserDto();
+          userDto.id = user.id;
+          userDto.username = user.username;
+
+          return userDto;
+        });
+        return { users: userDtos };
+      }
     } catch (error) {
       return error.response;
     }
