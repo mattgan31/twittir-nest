@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -35,5 +36,11 @@ export class UserController {
   @Get('users/:id')
   public async getUserById(@Param('id') id: number) {
     return this.userService.getUserById(id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('search')
+  public async searchUser(@Query('username') username: string) {
+    return this.userService.getListUser(username);
   }
 }

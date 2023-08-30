@@ -2,8 +2,9 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Users } from '../../output/entities/Users';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import * as Bcrypt from 'bcrypt';
+import { UserDto } from './user.dto';
 
 @Injectable()
 export class UserService {
@@ -69,5 +70,25 @@ export class UserService {
     const { ...result } = newUser
     return result;
 
+  }
+
+  public async getListUser(search: string) {
+    try {
+      const userList = await this.userRepo.find({
+        where: { username: Like(`%${search}%`) }
+      })
+
+      const userDtos = userList.map((user: any) => {
+        const userDto = new UserDto();
+        userDto.id = user.id;
+        userDto.username = user.username;
+
+        return userDto;
+      });
+
+      return { users: userDtos };
+    } catch (error) {
+      return error.response;
+    }
   }
 }
