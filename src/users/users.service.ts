@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Users } from '../../output/entities/Users';
-import { Like, Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import * as Bcrypt from 'bcrypt';
 import { UserDto } from './user.dto';
 
@@ -81,7 +81,7 @@ export class UserService {
         return { users: userList }
       } else {
         const userList = await this.userRepo.find({
-          where: { username: Like(`${search}%`) }
+          where: { username: ILike(`${search}%`) }
         })
 
         const userDtos = userList.map((user: any) => {

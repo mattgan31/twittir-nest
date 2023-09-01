@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Posts } from '../../output/entities/Posts';
 import { In, Repository } from 'typeorm';
@@ -94,6 +94,10 @@ export class PostsService {
 
   public async createPost(post: string, user: any) {
     try {
+
+      if (!post) {
+        throw new ForbiddenException("Post is required")
+      }
 
       const newPost = await this.postService.save({
         post,
