@@ -45,6 +45,7 @@ export class PostsService {
               user: {
                 id: comment.user.id,
                 username: comment.user.username,
+                profile_picture: comment.user.profilePicture
               },
               // Check if comment has likes
               ...(comment.likes && comment.likes.length > 0 && {
@@ -52,7 +53,8 @@ export class PostsService {
                   id: like.id,
                   user: {
                     id: like.user.id,
-                    username: like.user.username
+                    username: like.user.username,
+                    profile_picture: like.user.profilePicture
                   }
                 }))
               }),
@@ -65,7 +67,8 @@ export class PostsService {
               id: like.id,
               user: {
                 id: like.user.id,
-                username: like.user.username
+                username: like.user.username,
+                profile_picture: like.user.profilePicture
               }
             })) : []
 
@@ -76,6 +79,7 @@ export class PostsService {
           user: {
             id: post.user.id,
             username: post.user.username,
+            profile_picture: post.user.profilePicture
           },
           likes,
           comments,
@@ -142,7 +146,8 @@ export class PostsService {
               id: like.id,
               user: {
                 id: like.user.id,
-                username: like.user.username
+                username: like.user.username,
+                profile_picture: like.user.profilePicture
               }
             }))
           }),
@@ -155,7 +160,8 @@ export class PostsService {
             id: like.id,
             user: {
               id: like.user.id,
-              username: like.user.username
+              username: like.user.username,
+              profile_picture: like.user.profilePicture
             }
           })) : []
 
@@ -166,6 +172,7 @@ export class PostsService {
         user: {
           id: post.user.id,
           username: post.user.username,
+          profile_picture: post.user.profilePicture
         },
         comments,
         likes,
@@ -205,6 +212,7 @@ export class PostsService {
               user: {
                 id: comment.user.id,
                 username: comment.user.username,
+                profile_picture: comment.user.profilePicture
               },
               // Check if comment has likes
               ...(comment.likes && comment.likes.length > 0 && {
@@ -212,7 +220,8 @@ export class PostsService {
                   id: like.id,
                   user: {
                     id: like.user.id,
-                    username: like.user.username
+                    username: like.user.username,
+                    profile_picture: like.user.profilePicture
                   }
                 }))
               }),
@@ -225,7 +234,8 @@ export class PostsService {
               id: like.id,
               user: {
                 id: like.user.id,
-                username: like.user.username
+                username: like.user.username,
+                profile_picture: like.user.profilePicture
               }
             })) : []
 
@@ -236,6 +246,7 @@ export class PostsService {
           user: {
             id: post.user.id,
             username: post.user.username,
+            profile_picture: post.user.profilePicture
           },
           likes,
           comments,
@@ -290,6 +301,7 @@ export class PostsService {
               user: {
                 id: comment.user.id,
                 username: comment.user.username,
+                profile_picture: comment.user.profilePicture
               },
               // Check if comment has likes
               ...(comment.likes && comment.likes.length > 0 && {
@@ -297,7 +309,8 @@ export class PostsService {
                   id: like.id,
                   user: {
                     id: like.user.id,
-                    username: like.user.username
+                    username: like.user.username,
+                    profile_picture: like.user.profilePicture
                   }
                 }))
               }),
@@ -310,7 +323,8 @@ export class PostsService {
               id: like.id,
               user: {
                 id: like.user.id,
-                username: like.user.username
+                username: like.user.username,
+                profile_picture: like.user.profilePicture
               }
             })) : []
 
@@ -321,6 +335,7 @@ export class PostsService {
           user: {
             id: post.user.id,
             username: post.user.username,
+            profile_picture: post.user.profilePicture
           },
           likes,
           comments,
