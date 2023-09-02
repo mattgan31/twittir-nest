@@ -7,7 +7,7 @@ export class UploadMulter {
     static MulterOption(): MulterModuleOptions {
         return {
             storage: diskStorage({
-                destination: './uploads',
+                destination: './public/uploads',
                 filename(req, file, callback) {
                     // const filename = file.originalname;
                     const fileExtension = file.originalname.split('.').pop();

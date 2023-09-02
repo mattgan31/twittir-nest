@@ -72,6 +72,18 @@ export class UserService {
 
   }
 
+  public async getProfile(req: any) {
+    const { user } = req;
+    try {
+      const profile = await this.userRepo.findOne({ where: { id: user.id } });
+
+      const { password, ...result } = profile;
+      return result;
+    } catch (error) {
+      return error.response;
+    }
+  }
+
   public async getListUser(search: string) {
     try {
 
