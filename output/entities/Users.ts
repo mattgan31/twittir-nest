@@ -36,6 +36,13 @@ export class Users {
   @Column("timestamp with time zone", { name: "updatedAt" })
   updatedAt: Date;
 
+  @Column("character varying", {
+    name: "profile_picture",
+    nullable: true,
+    length: 255,
+  })
+  profilePicture: string | null;
+
   @OneToMany(() => Comments, (comments) => comments.user)
   comments: Comments[];
 

@@ -14,7 +14,11 @@ export class Likes {
   @PrimaryGeneratedColumn({ type: "integer", name: "id" })
   id: number;
 
-  @Column("timestamp without time zone", { name: "createdAt", nullable: true })
+  @Column("timestamp without time zone", {
+    name: "createdAt",
+    nullable: true,
+    default: () => "now()",
+  })
   createdAt: Date | null;
 
   @ManyToOne(() => Comments, (comments) => comments.likes)
