@@ -97,4 +97,19 @@ export class UserService {
       return error.response;
     }
   }
+
+  public async updateProfilePicture(picture: any, req: any) {
+    try {
+      const { user } = req;
+      const updateUser = await this.userRepo.update(user.id, {
+        profilePicture: picture.filename
+      });
+      if (!updateUser) {
+        throw new BadRequestException();
+      }
+      return updateUser;
+    } catch (error) {
+      return error.response;
+    }
+  }
 }

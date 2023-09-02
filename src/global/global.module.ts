@@ -15,10 +15,13 @@ import { RelationshipService } from 'src/relationship/relationship.service';
 import { RelationshipController } from 'src/relationship/relationship.controller';
 import { Relationships } from 'output/entities/Relationships';
 import { Likes } from 'output/entities/Likes';
+import { MulterModule } from '@nestjs/platform-express';
+import { UploadMulter } from 'src/multer/multer';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Posts, Users, Comments, Relationships, Likes]),
+    MulterModule.register(UploadMulter.MulterOption()),
     PassportModule,
     JwtModule.register({
       secret: 's3kret',
