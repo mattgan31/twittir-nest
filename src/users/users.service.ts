@@ -100,6 +100,7 @@ export class UserService {
           const userDto = new UserDto();
           userDto.id = user.id;
           userDto.username = user.username;
+          userDto.profilePicture = user.profilePicture;
 
           return userDto;
         });
