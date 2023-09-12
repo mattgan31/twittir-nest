@@ -14,7 +14,7 @@ import { RelationshipService } from './relationship/relationship.service';
       port: 5432,
       username: 'postgres',
       password: 'alam',
-      database: 'catalog_express',
+      database: 'twittir_nest',
       entities: ['dist/output/entities/*.js'],
       autoLoadEntities: true,
     }),
