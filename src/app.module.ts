@@ -3,6 +3,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GlobalModule } from './global/global.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RelationshipController } from './relationship/relationship.controller';
+import { RelationshipService } from './relationship/relationship.service';
 
 @Module({
   imports: [
@@ -12,7 +14,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       port: 5432,
       username: 'postgres',
       password: 'alam',
-      database: 'catalog_express',
+      database: 'twittir_nest',
       entities: ['dist/output/entities/*.js'],
       autoLoadEntities: true,
     }),
@@ -21,4 +23,4 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

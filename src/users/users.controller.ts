@@ -1,15 +1,22 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
   Post,
+  Put,
+  Query,
   Request,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './users.service';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UploadMulter } from 'src/multer/multer';
 
-@Controller('users')
+@Controller('api')
 export class UserController {
   constructor(private readonly userService: UserService) { }
 
@@ -19,15 +26,33 @@ export class UserController {
     return this.userService.signin(req.user);
   }
 
-  @UseGuards(AuthGuard('jwt'))
-  @Get('profile')
-  public async getProfile(@Request() req) {
-    return req.user;
+  @Post('register')
+  public async register(@Body() user: any) {
+    return this.userService.register(user);
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get(':id')
+  @Get('users/profile')
+  public async getProfile(@Request() req: any) {
+    return this.userService.getProfile(req);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('users/:id')
   public async getUserById(@Param('id') id: number) {
     return this.userService.getUserById(id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('search')
+  public async searchUser(@Query('username') username: string) {
+    return this.userService.getListUser(username);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(FileInterceptor('file', { storage: UploadMulter.MulterOption().storage }))
+  @Put('users/picture')
+  public async updateProfilePicture(@UploadedFile() picture: any, @Request() req: any) {
+    return this.userService.updateProfilePicture(picture, req);
   }
 }

@@ -1,47 +1,38 @@
 import {
   Column,
-  CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
-import { Users } from './Users';
-import { Comments } from './Comments';
+} from "typeorm";
+import { Comments } from "./Comments";
+import { Likes } from "./Likes";
+import { Users } from "./Users";
 
-@Index('posts_pkey', ['id'], { unique: true })
-@Entity('posts', { schema: 'public' })
+@Index("posts_pkey", ["id"], { unique: true })
+@Entity("posts", { schema: "public" })
 export class Posts {
-  @PrimaryGeneratedColumn({ type: 'integer', name: 'id' })
+  @PrimaryGeneratedColumn({ type: "integer", name: "id" })
   id: number;
 
-  @Column('integer', { name: 'userId', nullable: false })
-  userId: number | null;
-
-  @Column('character varying', { name: 'post', nullable: false, length: 255 })
+  @Column("character varying", { name: "post", nullable: true, length: 255 })
   post: string | null;
 
-  // @Column('timestamp with time zone', { name: 'createdAt' })
-  @CreateDateColumn({
-    type: 'timestamp with time zone',
-    name: 'createdAt',
-    nullable: true,
-    default: 'CURRENT_TIMESTAMP',
-  })
+  @Column("timestamp with time zone", { name: "createdAt" })
   createdAt: Date;
 
-  @UpdateDateColumn({
-    type: 'timestamp with time zone',
-    name: 'updatedAt',
-    nullable: true,
-  })
+  @Column("timestamp with time zone", { name: "updatedAt" })
   updatedAt: Date;
 
-  @ManyToOne(() => Users, (user) => user.posts)
-  user: Users;
+  @OneToMany(() => Comments, (comments) => comments.post)
+  comments: Comments[];
 
-  @OneToMany(() => Comments, (comment) => comment.post)
-  comment: Comments;
+  @OneToMany(() => Likes, (likes) => likes.post)
+  likes: Likes[];
+
+  @ManyToOne(() => Users, (users) => users.posts)
+  @JoinColumn([{ name: "userId", referencedColumnName: "id" }])
+  user: Users;
 }

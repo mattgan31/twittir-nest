@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Users } from '../../output/entities/Users';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import * as Bcrypt from 'bcrypt';
+import { UserDto } from './user.dto';
 
 @Injectable()
 export class UserService {
@@ -42,6 +43,86 @@ export class UserService {
       return result;
     } else {
       throw new NotFoundException('User not found');
+    }
+  }
+
+  public async register(user: any) {
+
+    if (!user.password || !user.username) {
+      throw new BadRequestException("Username or Password is required")
+    }
+
+    const isUserAvailable = await this.userRepo.findOne({ where: { username: user.username } })
+
+    if (isUserAvailable) {
+      throw new ConflictException("Username is unavailable")
+    }
+
+    const hashPassword = await Bcrypt.hash(user.password, 10);
+
+    const newUser = await this.userRepo.save({
+      username: user.username,
+      password: hashPassword,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    const { ...result } = newUser
+    return result;
+
+  }
+
+  public async getProfile(req: any) {
+    const { user } = req;
+    try {
+      const profile = await this.userRepo.findOne({ where: { id: user.id } });
+
+      const { password, ...result } = profile;
+      return result;
+    } catch (error) {
+      return error.response;
+    }
+  }
+
+  public async getListUser(search: string) {
+    try {
+
+      if (search === '') {
+        const userList = []
+
+        return { users: userList }
+      } else {
+        const userList = await this.userRepo.find({
+          where: { username: ILike(`${search}%`) }
+        })
+
+        const userDtos = userList.map((user: any) => {
+          const userDto = new UserDto();
+          userDto.id = user.id;
+          userDto.username = user.username;
+          userDto.profilePicture = user.profilePicture;
+
+          return userDto;
+        });
+        return { users: userDtos };
+      }
+    } catch (error) {
+      return error.response;
+    }
+  }
+
+  public async updateProfilePicture(picture: any, req: any) {
+    try {
+      const { user } = req;
+      const updateUser = await this.userRepo.update(user.id, {
+        profilePicture: picture.filename
+      });
+      if (!updateUser) {
+        throw new BadRequestException();
+      }
+      return updateUser;
+    } catch (error) {
+      return error.response;
     }
   }
 }
