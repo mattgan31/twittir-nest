@@ -6,7 +6,7 @@
     "port": 5432,
     "username": "postgres",
     "password": "alam",
-    "database": "catalog_express",
+    "database": "twittir_nest",
     "synchronize": false,
     "entities": ["entities/*.js"]
   }
