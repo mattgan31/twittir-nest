@@ -16,7 +16,7 @@ export class PostsController {
   constructor(private readonly postService: PostsService) { }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get()
+  @Get('posts')
   public async getPosts() {
     return this.postService.findAll();
   }
