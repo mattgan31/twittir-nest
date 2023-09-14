@@ -51,7 +51,7 @@ yarn run start:dev
 
 ### Login
 
-```json
+```sh
 # POST | localhost:3001/api/login
 {
   "username": [your_username],
@@ -61,7 +61,7 @@ yarn run start:dev
 
 ### Register
 
-```json
+```sh
 # POST | localhost:3001/api/register
 {
   "username": [your_username],
@@ -71,7 +71,7 @@ yarn run start:dev
 
 ### Create Post
 
-```json
+```sh
 # POST | localhost:3001/api/posts
 {
     "post": [post_description]
@@ -80,19 +80,19 @@ yarn run start:dev
 
 ### Get Posts
 
-```json
+```sh
 # GET | localhost:3001/api/posts
 ```
 
 ### Show Post
 
-```json
+```sh
 # GET | localhost:3001/api/posts/[id]
 ```
 
 ### Create Comment on Post
 
-```json
+```sh
 # POST | localhost:3001/api/posts/[postId]/comment
 {
     "description": "comment_description"
@@ -101,25 +101,25 @@ yarn run start:dev
 
 ### Create Like on Post
 
-```json
+```sh
 # POST | localhost:3001/api/posts/[postId]/like
 ```
 
 ### Create Like on Comment
 
-```json
+```sh
 # POST | localhost:3001/api/comments/[commentId]/like
 ```
 
 ### Follow user
 
-```json
+```sh
 # POST | localhost:3001/api/users/[userId]/follow
 ```
 
 ### Update Profile Picture
 
-```json
+```sh
 # PUT | localhost:3001/api/users/picture
 ```
 
