@@ -11,7 +11,7 @@ import {
 import { PostsService } from './posts.service';
 import { AuthGuard } from '@nestjs/passport';
 
-@Controller('api/posts')
+@Controller('api')
 export class PostsController {
   constructor(private readonly postService: PostsService) { }
 
@@ -22,33 +22,33 @@ export class PostsController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Post()
+  @Post('posts')
   public async createPost(@Body('post') post: string, @Request() req: any) {
     const { user } = req;
     return this.postService.createPost(post, user);
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('followed')
+  @Get('posts/followed')
   public async getPostFollowedByUser(@Req() req: any) {
     return this.postService.getPostFollowedByUser(req.user);
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get(':id')
+  @Get('posts/:id')
   public async getPostById(@Param('id') id: number) {
     return this.postService.getPostById(id);
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('user/:id')
+  @Get('posts/user/:id')
   public async getPostByUserId(@Param('id') id: number) {
     return this.postService.getPostByUserId(id)
   }
 
   // Comment session
   @UseGuards(AuthGuard('jwt'))
-  @Post(':id/comment')
+  @Post('posts/:id/comment')
   public async createComment(
     @Body('description') comment: string,
     @Request() req: any,
@@ -60,7 +60,7 @@ export class PostsController {
 
   // Like Session
   @UseGuards(AuthGuard('jwt'))
-  @Post(':id/like')
+  @Post('posts/:id/like')
   public async likePost(
     @Param('id') postId: number,
     @Request() req: any,
@@ -70,7 +70,7 @@ export class PostsController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Post(':id/comment/like')
+  @Post('comments/:id/like')
   public async likeComment(
     @Param('id') commentId: number,
     @Request() req: any,
