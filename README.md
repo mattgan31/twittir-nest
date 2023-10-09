@@ -24,106 +24,39 @@
 
 ## Description
 
-This is my social media API build using [Nest](https://github.com/nestjs/nest) with postgreSQL DB. To run this app you must restore database backup file first.
-
-## Restore Backup Database
-
-You can restore db using pgAdmin for easily
+[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
 ## Installation
 
 ```bash
-yarn install
+$ yarn install
 ```
 
 ## Running the app
 
 ```bash
 # development
-yarn run start
+$ yarn run start
 
 # watch mode
-yarn run start:dev
+$ yarn run start:dev
 
+# production mode
+$ yarn run start:prod
 ```
 
-## Endpoint
+## Test
 
-### Login
+```bash
+# unit tests
+$ yarn run test
 
-```json
-# POST | localhost:3001/api/login
-{
-  "username": [your_username],
-  "password": [your_password]
-}
+# e2e tests
+$ yarn run test:e2e
+
+# test coverage
+$ yarn run test:cov
 ```
-
-### Register
-
-```json
-# POST | localhost:3001/api/register
-{
-  "username": [your_username],
-  "password": [your_password]
-}
-```
-
-### Create Post
-
-```json
-# POST | localhost:3001/api/posts
-{
-    "post": [post_description]
-}
-```
-
-### Get Posts
-
-```json
-# GET | localhost:3001/api/posts
-```
-
-### Show Post
-
-```json
-# GET | localhost:3001/api/posts/[id]
-```
-
-### Create Comment on Post
-
-```json
-# POST | localhost:3001/api/posts/[postId]/comment
-{
-    "description": "comment_description"
-}
-```
-
-### Create Like on Post
-
-```json
-# POST | localhost:3001/api/posts/[postId]/like
-```
-
-### Create Like on Comment
-
-```json
-# POST | localhost:3001/api/comments/[commentId]/like
-```
-
-### Follow user
-
-```json
-# POST | localhost:3001/api/users/[userId]/follow
-```
-
-### Update Profile Picture
-
-```json
-# PUT | localhost:3001/api/users/picture
-```
-
-NOTE : For update profile picture you should use form-data in postman with key 'file' then the value you can choose picture file.
 
 ## Support
 

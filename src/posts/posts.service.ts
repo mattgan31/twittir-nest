@@ -1,38 +1,34 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Posts } from '../../output/entities/Posts';
-import { In, Repository } from 'typeorm';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PostInterface } from './posts.interface';
-import { Comments } from 'output/entities/Comments';
 import { CommentInterface } from './comments/comments.interface';
-import { Relationships } from 'output/entities/Relationships';
 import { LikesInterface } from './likes/likes.interface';
-import { Likes } from 'output/entities/Likes';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class PostsService {
-  constructor(
-    @InjectRepository(Posts) private postService: Repository<Posts>,
-    @InjectRepository(Comments) private commentService: Repository<Comments>,
-    @InjectRepository(Relationships) private relationshipService: Repository<Relationships>,
-    @InjectRepository(Likes) private likeService: Repository<Likes>,
-  ) { }
+  constructor(private prisma: PrismaService) { }
 
   public async findAll(): Promise<{ data: PostInterface[] }> {
     try {
-      const posts = await this.postService.find({
-        relations: {
+      const posts = await this.prisma.post.findMany({
+        include: {
           user: true,
-          comments: { user: true, likes: { user: true } },
-          likes: { user: true }
+          comments: {
+            include: { user: true, likes: { include: { user: true } } },
+          },
+          likes: { include: { user: true } },
         },
-        order: {
-          createdAt: 'DESC',
+        orderBy: {
+          createdAt: 'desc',
         },
       });
 
       if (!posts) {
-        throw new NotFoundException("Posts is not available")
+        throw new NotFoundException('Posts is not available');
       }
 
       const formattedPosts: PostInterface[] = posts.map((post) => {
@@ -45,32 +41,34 @@ export class PostsService {
               user: {
                 id: comment.user.id,
                 username: comment.user.username,
-                profile_picture: comment.user.profilePicture
+                profile_picture: comment.user.profilePicture,
               },
               // Check if comment has likes
-              ...(comment.likes && comment.likes.length > 0 && {
+              ...(comment.likes &&
+                comment.likes.length > 0 && {
                 likes: comment.likes.map((like) => ({
                   id: like.id,
                   user: {
                     id: like.user.id,
                     username: like.user.username,
-                    profile_picture: like.user.profilePicture
-                  }
-                }))
+                    profile_picture: like.user.profilePicture,
+                  },
+                })),
               }),
             }))
             : [];
 
         const likes: LikesInterface[] =
-          post.likes && post.likes.length > 0 ?
-            post.likes.map((like) => ({
+          post.likes && post.likes.length > 0
+            ? post.likes.map((like) => ({
               id: like.id,
               user: {
                 id: like.user.id,
                 username: like.user.username,
-                profile_picture: like.user.profilePicture
-              }
-            })) : []
+                profile_picture: like.user.profilePicture,
+              },
+            }))
+            : [];
 
         return {
           id: post.id,
@@ -79,7 +77,7 @@ export class PostsService {
           user: {
             id: post.user.id,
             username: post.user.username,
-            profile_picture: post.user.profilePicture
+            profile_picture: post.user.profilePicture,
           },
           likes,
           comments,
@@ -88,9 +86,7 @@ export class PostsService {
         };
       });
 
-
       return { data: formattedPosts };
-
     } catch (error) {
       throw error;
     }
@@ -98,16 +94,17 @@ export class PostsService {
 
   public async createPost(post: string, user: any) {
     try {
-
       if (!post) {
-        throw new ForbiddenException("Post is required")
+        throw new ForbiddenException('Post is required');
       }
 
-      const newPost = await this.postService.save({
-        post,
-        user,
-        createdAt: new Date(),
-        updatedAt: new Date()
+      const newPost = await this.prisma.post.create({
+        data: {
+          post,
+          user,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       });
 
       return { data: newPost };
@@ -118,12 +115,14 @@ export class PostsService {
 
   public async getPostById(id: number): Promise<{ data: PostInterface }> {
     try {
-      const post = await this.postService.findOne({
-        where: [{ id }],
-        relations: {
+      const post = await this.prisma.post.findUnique({
+        where: { id },
+        include: {
           user: true,
-          comments: { user: true, likes: { user: true } },
-          likes: { user: true }
+          comments: {
+            include: { user: true, likes: { include: { user: true } } },
+          },
+          likes: { include: { user: true } },
         },
       });
 
@@ -141,29 +140,31 @@ export class PostsService {
             id: comment.user.id,
             username: comment.user.username,
           },
-          ...(comment.likes && comment.likes.length > 0 && {
+          ...(comment.likes &&
+            comment.likes.length > 0 && {
             likes: comment.likes.map((like) => ({
               id: like.id,
               user: {
                 id: like.user.id,
                 username: like.user.username,
-                profile_picture: like.user.profilePicture
-              }
-            }))
+                profile_picture: like.user.profilePicture,
+              },
+            })),
           }),
         }));
       }
 
       const likes: LikesInterface[] =
-        post.likes && post.likes.length > 0 ?
-          post.likes.map((like) => ({
+        post.likes && post.likes.length > 0
+          ? post.likes.map((like) => ({
             id: like.id,
             user: {
               id: like.user.id,
               username: like.user.username,
-              profile_picture: like.user.profilePicture
-            }
-          })) : []
+              profile_picture: like.user.profilePicture,
+            },
+          }))
+          : [];
 
       const postWithFormattedComments: PostInterface = {
         id: post.id,
@@ -172,7 +173,7 @@ export class PostsService {
         user: {
           id: post.user.id,
           username: post.user.username,
-          profile_picture: post.user.profilePicture
+          profile_picture: post.user.profilePicture,
         },
         comments,
         likes,
@@ -186,20 +187,22 @@ export class PostsService {
 
   public async getPostByUserId(userId: number) {
     try {
-      const posts = await this.postService.find({
+      const posts = await this.prisma.post.findMany({
         where: { user: { id: userId } },
-        relations: {
+        include: {
           user: true,
-          comments: { user: true, likes: { user: true } },
-          likes: { user: true }
+          comments: {
+            include: { user: true, likes: { include: { user: true } } },
+          },
+          likes: { include: { user: true } },
         },
-        order: {
-          createdAt: 'DESC',
+        orderBy: {
+          createdAt: 'desc',
         },
       });
 
       if (!posts) {
-        throw new NotFoundException("Posts is not available")
+        throw new NotFoundException('Posts is not available');
       }
 
       const formattedPosts: PostInterface[] = posts.map((post) => {
@@ -212,32 +215,34 @@ export class PostsService {
               user: {
                 id: comment.user.id,
                 username: comment.user.username,
-                profile_picture: comment.user.profilePicture
+                profile_picture: comment.user.profilePicture,
               },
               // Check if comment has likes
-              ...(comment.likes && comment.likes.length > 0 && {
+              ...(comment.likes &&
+                comment.likes.length > 0 && {
                 likes: comment.likes.map((like) => ({
                   id: like.id,
                   user: {
                     id: like.user.id,
                     username: like.user.username,
-                    profile_picture: like.user.profilePicture
-                  }
-                }))
+                    profile_picture: like.user.profilePicture,
+                  },
+                })),
               }),
             }))
             : [];
 
         const likes: LikesInterface[] =
-          post.likes && post.likes.length > 0 ?
-            post.likes.map((like) => ({
+          post.likes && post.likes.length > 0
+            ? post.likes.map((like) => ({
               id: like.id,
               user: {
                 id: like.user.id,
                 username: like.user.username,
-                profile_picture: like.user.profilePicture
-              }
-            })) : []
+                profile_picture: like.user.profilePicture,
+              },
+            }))
+            : [];
 
         return {
           id: post.id,
@@ -246,7 +251,7 @@ export class PostsService {
           user: {
             id: post.user.id,
             username: post.user.username,
-            profile_picture: post.user.profilePicture
+            profile_picture: post.user.profilePicture,
           },
           likes,
           comments,
@@ -255,40 +260,43 @@ export class PostsService {
         };
       });
 
-
       return { data: formattedPosts };
-
     } catch (error) {
       throw error;
     }
   }
 
   // HERE IS BUG
-  public async getPostFollowedByUser(user: any): Promise<{ data: PostInterface[] }> {
+  public async getPostFollowedByUser(
+    user: any,
+  ): Promise<{ data: PostInterface[] }> {
+    const { id: userId } = user;
     try {
-      const followedUsers = await this.relationshipService.find({
-        where: { follower: user },
-        relations: { following: true },
+      const followedUsers = await this.prisma.relationship.findMany({
+        where: { followerId: userId },
+        include: { following: true },
       });
 
       if (followedUsers.length < 1) {
-        throw new NotFoundException("You are not following anyone");
+        throw new NotFoundException('You are not following anyone');
       }
 
       const userIds = followedUsers.map((item) => item.following.id);
 
-      const posts = await this.postService.find({
-        where: { user: { id: In(userIds) } },
-        relations: {
+      const posts = await this.prisma.post.findMany({
+        where: { user: { id: { in: userIds } } },
+        include: {
           user: true,
-          comments: { user: true, likes: { user: true } },
-          likes: { user: true }
+          comments: {
+            include: { user: true, likes: { include: { user: true } } },
+          },
+          likes: { include: { user: true } },
         },
-        order: { createdAt: 'DESC' }
-      })
+        orderBy: { createdAt: 'desc' },
+      });
 
       if (!posts) {
-        throw new NotFoundException("Posts is not available")
+        throw new NotFoundException('Posts is not available');
       }
 
       const formattedPosts: PostInterface[] = posts.map((post) => {
@@ -301,32 +309,34 @@ export class PostsService {
               user: {
                 id: comment.user.id,
                 username: comment.user.username,
-                profile_picture: comment.user.profilePicture
+                profile_picture: comment.user.profilePicture,
               },
               // Check if comment has likes
-              ...(comment.likes && comment.likes.length > 0 && {
+              ...(comment.likes &&
+                comment.likes.length > 0 && {
                 likes: comment.likes.map((like) => ({
                   id: like.id,
                   user: {
                     id: like.user.id,
                     username: like.user.username,
-                    profile_picture: like.user.profilePicture
-                  }
-                }))
+                    profile_picture: like.user.profilePicture,
+                  },
+                })),
               }),
             }))
             : [];
 
         const likes: LikesInterface[] =
-          post.likes && post.likes.length > 0 ?
-            post.likes.map((like) => ({
+          post.likes && post.likes.length > 0
+            ? post.likes.map((like) => ({
               id: like.id,
               user: {
                 id: like.user.id,
                 username: like.user.username,
-                profile_picture: like.user.profilePicture
-              }
-            })) : []
+                profile_picture: like.user.profilePicture,
+              },
+            }))
+            : [];
 
         return {
           id: post.id,
@@ -335,7 +345,7 @@ export class PostsService {
           user: {
             id: post.user.id,
             username: post.user.username,
-            profile_picture: post.user.profilePicture
+            profile_picture: post.user.profilePicture,
           },
           likes,
           comments,
@@ -343,7 +353,6 @@ export class PostsService {
           // For example: likes: post.likes,
         };
       });
-
 
       return { data: formattedPosts };
     } catch (error) {
@@ -353,14 +362,16 @@ export class PostsService {
 
   // Comment session
   public async createComment(comment: string, user: any, postId: number) {
-    const post = await this.postService.findOne({ where: { id: postId } })
+    const post = await this.prisma.post.findUnique({ where: { id: postId } });
     try {
-      const newComment = await this.commentService.save({
-        post,
-        description: comment,
-        user,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+      const newComment = await this.prisma.comment.create({
+        data: {
+          postId,
+          description: comment,
+          userId: user.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       });
       return newComment;
     } catch (error) {
@@ -370,34 +381,40 @@ export class PostsService {
 
   // Like Session
   public async likePost(user: any, postId: number) {
+    const { id: userId } = user as { id: number };
     try {
-      const post = await this.postService.findOne({ where: { id: postId } })
+      const post = await this.prisma.post.findUnique({ where: { id: postId } });
       if (!post) {
-        throw new NotFoundException("The post want you to like is not found")
+        throw new NotFoundException('The post want you to like is not found');
       }
 
-      const postIsLikedByUser = await this.likeService.findOne({ where: { user, post } });
+      const postIsLikedByUser = await this.prisma.like.findFirst({
+        where: { userId, postId },
+      });
 
       if (!postIsLikedByUser) {
-        await this.likeService.save({
-          post,
-          user
+        await this.prisma.like.create({
+          data: {
+            postId,
+            userId,
+          },
         });
 
         return {
-          message: `You are liked post with ${post.id} ID`
-        }
+          message: `You are liked post with ${post.id} ID`,
+        };
       } else {
-        await this.likeService.delete({
-          post,
-          user
+        await this.prisma.like.deleteMany({
+          where: {
+            postId,
+            userId,
+          },
         });
 
         return {
-          message: `You are unlike post with ${post.id} ID`
-        }
+          message: `You are unlike post with ${post.id} ID`,
+        };
       }
-
     } catch (error) {
       throw error;
     }
@@ -405,33 +422,42 @@ export class PostsService {
 
   public async likeComment(user: any, commentId: number) {
     try {
-      const comment = await this.commentService.findOne({ where: { id: commentId } })
+      const comment = await this.prisma.comment.findUnique({
+        where: { id: commentId },
+      });
       if (!comment) {
-        throw new NotFoundException("The comment want you to like is not found")
+        throw new NotFoundException(
+          'The comment want you to like is not found',
+        );
       }
 
-      const postIsLikedByUser = await this.likeService.findOne({ where: { user, comment } });
+      const postIsLikedByUser = await this.prisma.like.findMany({
+        where: { userId: user.id, commentId },
+      });
 
       if (!postIsLikedByUser) {
-        await this.likeService.save({
-          comment,
-          user
+        await this.prisma.like.create({
+          data: {
+            commentId,
+            userId: user.id,
+          },
         });
 
         return {
-          message: `You are liked comment with ${comment.id} ID`
-        }
+          message: `You are liked comment with ${comment.id} ID`,
+        };
       } else {
-        await this.likeService.delete({
-          comment,
-          user
+        await this.prisma.like.deleteMany({
+          where: {
+            commentId,
+            userId: user,
+          },
         });
 
         return {
-          message: `You are unlike comment with ${comment.id} ID`
-        }
+          message: `You are unlike comment with ${comment.id} ID`,
+        };
       }
-
     } catch (error) {
       throw error;
     }

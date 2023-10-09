@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User{
+  id Int @id @default(autoincrement())
+  username String @unique
+  password String
+  fullname String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  profilePicture String?
+  bio String?
+  deleted Boolean @default(false)
+  posts Post[]
+  likes Like[]
+  comments Comment[]
+  followers Relationship[] @relation(name: "follower")
+  followings Relationship[] @relation(name: "following")
+}
+
+model Post{
+  id Int @id @default(autoincrement())
+  post String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  deleted Boolean @default(false)
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+  comments Comment[]
+  likes Like[]
+}
+
+model Like{
+  id Int @id @default(autoincrement())
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+  post Post? @relation(fields: [postId], references: [id])
+  postId Int?
+  comment Comment? @relation(fields: [commentId], references: [id])
+  commentId Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  deleted Boolean @default(false)
+}
+
+model Comment{
+  id Int @id @default(autoincrement())
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+  post Post @relation(fields: [postId], references: [id])
+  postId Int
+  description String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  deleted Boolean @default(false)
+  likes Like[]
+}
+
+model Relationship{
+  id Int @id @default(autoincrement())
+  follower User @relation(fields: [followerId], references:[id], name: "follower")
+  followerId Int
+  following User @relation(fields: [followingId], references:[id], name: "following")
+  followingId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  deleted Boolean @default(false)
+}

@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Req,
   Request,
@@ -36,7 +37,7 @@ export class PostsController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('posts/:id')
-  public async getPostById(@Param('id') id: number) {
+  public async getPostById(@Param('id', ParseIntPipe) id: number) {
     return this.postService.getPostById(id);
   }
 
