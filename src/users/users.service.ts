@@ -40,7 +40,7 @@ export class UserService {
 
     if (user) {
       const { password, ...result } = user;
-      return result;
+      return { data: result };
     } else {
       throw new NotFoundException('User not found');
     }
@@ -68,7 +68,7 @@ export class UserService {
     });
 
     const { ...result } = newUser
-    return result;
+    return { data: result };
 
   }
 
@@ -78,7 +78,7 @@ export class UserService {
       const profile = await this.userRepo.findOne({ where: { id: user.id } });
 
       const { password, ...result } = profile;
-      return result;
+      return { data: result };
     } catch (error) {
       return error.response;
     }
@@ -104,7 +104,7 @@ export class UserService {
 
           return userDto;
         });
-        return { users: userDtos };
+        return { data: userDtos };
       }
     } catch (error) {
       return error.response;

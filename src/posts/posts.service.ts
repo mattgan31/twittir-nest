@@ -18,7 +18,7 @@ export class PostsService {
     @InjectRepository(Likes) private likeService: Repository<Likes>,
   ) { }
 
-  public async findAll(): Promise<{ posts: PostInterface[] }> {
+  public async findAll(): Promise<{ data: PostInterface[] }> {
     try {
       const posts = await this.postService.find({
         relations: {
@@ -89,7 +89,7 @@ export class PostsService {
       });
 
 
-      return { posts: formattedPosts };
+      return { data: formattedPosts };
 
     } catch (error) {
       throw error;
@@ -110,13 +110,13 @@ export class PostsService {
         updatedAt: new Date()
       });
 
-      return newPost;
+      return { data: newPost };
     } catch (error) {
       throw error;
     }
   }
 
-  public async getPostById(id: number): Promise<{ posts: PostInterface }> {
+  public async getPostById(id: number): Promise<{ data: PostInterface }> {
     try {
       const post = await this.postService.findOne({
         where: [{ id }],
@@ -178,7 +178,7 @@ export class PostsService {
         likes,
       };
 
-      return { posts: postWithFormattedComments };
+      return { data: postWithFormattedComments };
     } catch (error) {
       throw error;
     }
@@ -256,7 +256,7 @@ export class PostsService {
       });
 
 
-      return { posts: formattedPosts };
+      return { data: formattedPosts };
 
     } catch (error) {
       throw error;
@@ -264,7 +264,7 @@ export class PostsService {
   }
 
   // HERE IS BUG
-  public async getPostFollowedByUser(user: any): Promise<{ posts: PostInterface[] }> {
+  public async getPostFollowedByUser(user: any): Promise<{ data: PostInterface[] }> {
     try {
       const followedUsers = await this.relationshipService.find({
         where: { follower: user },
@@ -345,7 +345,7 @@ export class PostsService {
       });
 
 
-      return { posts: formattedPosts };
+      return { data: formattedPosts };
     } catch (error) {
       throw error;
     }
