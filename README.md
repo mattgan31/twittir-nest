@@ -24,32 +24,32 @@
 
 ## Description
 
-This is my social media API build using [Nest](https://github.com/nestjs/nest) with postgreSQL DB. To run this app you must restore database backup file first.
-
-## Restore Backup Database
-
-You can restore db using pgAdmin for easily
+[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
 ## Installation
 
 ```bash
-yarn install
+$ yarn install
 ```
 
 ## Running the app
 
 ```bash
 # development
-yarn run start
+$ yarn run start
 
 # watch mode
-yarn run start:dev
+$ yarn run start:dev
 
+# production mode
+$ yarn run start:prod
 ```
 
-## Endpoint
+## Test
 
-### Login
+```bash
+# unit tests
+$ yarn run test
 
 ```sh
 # POST | localhost:3001/api/login

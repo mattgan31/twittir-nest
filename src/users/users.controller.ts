@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Put,
   Query,
@@ -14,7 +15,7 @@ import {
 import { UserService } from './users.service';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { UploadMulter } from 'src/multer/multer';
+import { UploadMulter } from '../multer/multer';
 
 @Controller('api')
 export class UserController {
@@ -39,7 +40,7 @@ export class UserController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('users/:id')
-  public async getUserById(@Param('id') id: number) {
+  public async getUserById(@Param('id', ParseIntPipe) id: number) {
     return this.userService.getUserById(id);
   }
 
@@ -50,9 +51,14 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @UseInterceptors(FileInterceptor('file', { storage: UploadMulter.MulterOption().storage }))
+  @UseInterceptors(
+    FileInterceptor('file', { storage: UploadMulter.MulterOption().storage }),
+  )
   @Put('users/picture')
-  public async updateProfilePicture(@UploadedFile() picture: any, @Request() req: any) {
+  public async updateProfilePicture(
+    @UploadedFile() picture: any,
+    @Request() req: any,
+  ) {
     return this.userService.updateProfilePicture(picture, req);
   }
 }

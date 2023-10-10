@@ -1,26 +1,35 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Users } from '../../output/entities/Users';
-import { ILike, Repository } from 'typeorm';
 import * as Bcrypt from 'bcrypt';
 import { UserDto } from './user.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UserService {
-  constructor(
-    @InjectRepository(Users) private userRepo: Repository<Users>,
-    private jwtService: JwtService,
-  ) { }
+  constructor(private prisma: PrismaService, private jwtService: JwtService) { }
 
   public async validateUser(username: string, password: string) {
-    const user = await this.userRepo.findOne({
-      where: [{ username: username }],
-    });
-    const compare = await Bcrypt.compare(password, user.password);
-    if (compare) {
-      const { ...result } = user;
-      return result;
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { username },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const compare = await Bcrypt.compare(password, user.password);
+      if (compare) {
+        const { ...result } = user;
+        return result;
+      }
+    } catch (error) {
+      console.log(error);
     }
   }
 
@@ -36,11 +45,11 @@ export class UserService {
   }
 
   public async getUserById(id: number) {
-    const user = await this.userRepo.findOne({ where: { id } });
+    const user = await this.prisma.user.findUnique({ where: { id } });
 
     if (user) {
       const { password, ...result } = user;
-      return result;
+      return { data: result };
     } else {
       throw new NotFoundException('User not found');
     }
@@ -48,37 +57,49 @@ export class UserService {
 
   public async register(user: any) {
 
-    if (!user.password || !user.username) {
-      throw new BadRequestException("Username or Password is required")
+    try {
+      if (!user.password || !user.username || !user.fullname) {
+        throw new BadRequestException('Username or Password is required');
+      }
+
+      const isUserUnavailable = await this.prisma.user.findUnique({
+        where: { username: user.username },
+      });
+
+      if (isUserUnavailable) {
+        throw new ConflictException('Username is unavailable');
+      }
+
+      const hashPassword = await Bcrypt.hash(user.password, 10);
+
+      const newUser = await this.prisma.user.create({
+        data: {
+          username: user.username,
+          password: hashPassword,
+          fullname: user.fullname,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+
+      const { password, ...result } = newUser;
+      return { data: result };
+    } catch (error) {
+      console.log(error);
+      throw error;
+
     }
-
-    const isUserAvailable = await this.userRepo.findOne({ where: { username: user.username } })
-
-    if (isUserAvailable) {
-      throw new ConflictException("Username is unavailable")
-    }
-
-    const hashPassword = await Bcrypt.hash(user.password, 10);
-
-    const newUser = await this.userRepo.save({
-      username: user.username,
-      password: hashPassword,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-
-    const { ...result } = newUser
-    return result;
-
   }
 
   public async getProfile(req: any) {
     const { user } = req;
     try {
-      const profile = await this.userRepo.findOne({ where: { id: user.id } });
+      const profile = await this.prisma.user.findUnique({
+        where: { id: user.id },
+      });
 
       const { password, ...result } = profile;
-      return result;
+      return { data: result };
     } catch (error) {
       return error.response;
     }
@@ -86,15 +107,14 @@ export class UserService {
 
   public async getListUser(search: string) {
     try {
-
       if (search === '') {
-        const userList = []
+        const userList = [];
 
-        return { users: userList }
+        return { data: userList };
       } else {
-        const userList = await this.userRepo.find({
-          where: { username: ILike(`${search}%`) }
-        })
+        const userList = await this.prisma.user.findMany({
+          where: { username: { startsWith: search } },
+        });
 
         const userDtos = userList.map((user: any) => {
           const userDto = new UserDto();
@@ -104,25 +124,26 @@ export class UserService {
 
           return userDto;
         });
-        return { users: userDtos };
+        return { data: userDtos };
       }
     } catch (error) {
-      return error.response;
+      throw error;
     }
   }
 
   public async updateProfilePicture(picture: any, req: any) {
     try {
       const { user } = req;
-      const updateUser = await this.userRepo.update(user.id, {
-        profilePicture: picture.filename
+      const updateUser = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { profilePicture: picture.filename },
       });
       if (!updateUser) {
         throw new BadRequestException();
       }
       return updateUser;
     } catch (error) {
-      return error.response;
+      throw error;
     }
   }
 }

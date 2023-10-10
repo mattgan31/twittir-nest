@@ -1,4 +1,4 @@
-import { UsersInterface } from "src/users/users.interface";
+import { UsersInterface } from "../../users/users.interface";
 
 export interface LikesInterface {
     id: number;
