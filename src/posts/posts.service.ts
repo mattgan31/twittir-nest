@@ -81,10 +81,18 @@ export class PostsService {
         include: {
           user: true,
           comments: {
-            include: { user: true, likes: { include: { user: true } } },
+            include: {
+              user: true, likes: {
+                include: { user: true },
+                where: { deleted: false }
+              }
+            },
           },
-          likes: { include: { user: true } },
-        },
+          likes: {
+            include: { user: true },
+            where: { deleted: false }
+          },
+        }, where: { deleted: false },
         orderBy: {
           createdAt: 'desc',
         },
@@ -113,6 +121,13 @@ export class PostsService {
           post,
           userId: user.id,
         },
+        select: {
+          id: true,
+          post: true,
+          createdAt: true,
+          updatedAt: true,
+          userId: true
+        }
       });
 
       return { data: newPost };
@@ -124,7 +139,7 @@ export class PostsService {
   public async getPostById(id: number): Promise<{ data: PostInterface }> {
     try {
       const post = await this.prisma.post.findUnique({
-        where: { id },
+        where: { id, deleted: false },
         include: {
           user: true,
           comments: {
@@ -196,7 +211,7 @@ export class PostsService {
   public async getPostByUserId(userId: number) {
     try {
       const posts = await this.prisma.post.findMany({
-        where: { user: { id: userId } },
+        where: { user: { id: userId }, deleted: false },
         include: {
           user: true,
           comments: {
@@ -228,7 +243,7 @@ export class PostsService {
     const { id: userId } = user;
     try {
       const followedUsers = await this.prisma.relationship.findMany({
-        where: { followerId: userId },
+        where: { followerId: userId, deleted: false },
         include: { following: true },
       });
 
@@ -317,21 +332,46 @@ export class PostsService {
     }
   }
 
+  public async deletePostById(postId: number) {
+    try {
+      const post = await this.prisma.post.findUnique({ where: { id: postId } });
+
+      if (!post) {
+        throw new NotFoundException(`Post with id ${postId} is not found`)
+      }
+
+      const deletedPost = await this.prisma.post.update({ data: { deleted: true }, where: { id: postId } });
+
+      return { data: deletedPost };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+
   // Comment session
   public async createComment(comment: string, user: any, postId: number) {
-    const post = await this.prisma.post.findUnique({ where: { id: postId } });
-
-    if (!post) {
-      throw new NotFoundException(`Post with id ${postId} is not found`)
-    }
-
     try {
+      const post = await this.prisma.post.findUnique({ where: { id: postId } });
+
+      if (!post) {
+        throw new NotFoundException(`Post with id ${postId} is not found`)
+      }
+
       const newComment = await this.prisma.comment.create({
         data: {
           postId,
           description: comment,
           userId: user.id,
         },
+        select: {
+          id: true,
+          description: true,
+          userId: true,
+          postId: true,
+          createdAt: true,
+          updatedAt: true,
+        }
       });
       return { data: newComment };
     } catch (error) {
@@ -363,8 +403,9 @@ export class PostsService {
         return {
           message: `You are liked post with ${post.id} ID`,
         };
-      } else {
-        await this.prisma.like.deleteMany({
+      } else if (postIsLikedByUser.deleted === false) {
+        await this.prisma.like.updateMany({
+          data: { deleted: true },
           where: {
             postId,
             userId,
@@ -372,7 +413,19 @@ export class PostsService {
         });
 
         return {
-          message: `You are unlike post with ${post.id} ID`,
+          message: `You are unliked post with ${post.id} ID`,
+        };
+      } else if (postIsLikedByUser.deleted === true) {
+        await this.prisma.like.updateMany({
+          data: { deleted: false },
+          where: {
+            postId,
+            userId,
+          },
+        });
+
+        return {
+          message: `You are liked post with ${post.id} ID`,
         };
       }
     } catch (error) {
@@ -381,6 +434,7 @@ export class PostsService {
   }
 
   public async likeComment(user: any, commentId: number) {
+    const { id: userId } = user;
     try {
       const comment = await this.prisma.comment.findUnique({
         where: { id: commentId },
@@ -391,31 +445,44 @@ export class PostsService {
         );
       }
 
-      const postIsLikedByUser = await this.prisma.like.findMany({
+      const commentIsLikedByUser = await this.prisma.like.findFirst({
         where: { userId: user.id, commentId },
       });
 
-      if (postIsLikedByUser.length === 0) {
+      if (!commentIsLikedByUser) {
         await this.prisma.like.create({
           data: {
             commentId,
-            userId: user.id,
+            userId,
           },
         });
 
         return {
           message: `You are liked comment with ${comment.id} ID`,
         };
-      } else {
-        await this.prisma.like.deleteMany({
+      } else if (commentIsLikedByUser.deleted === false) {
+        await this.prisma.like.updateMany({
+          data: { deleted: true },
           where: {
             commentId,
-            userId: user.id,
+            userId,
           },
         });
 
         return {
-          message: `You are unlike comment with ${comment.id} ID`,
+          message: `You are unliked comment with ${comment.id} ID`,
+        };
+      } else if (commentIsLikedByUser.deleted === true) {
+        await this.prisma.like.updateMany({
+          data: { deleted: false },
+          where: {
+            commentId,
+            userId,
+          },
+        });
+
+        return {
+          message: `You are liked comment with ${comment.id} ID`,
         };
       }
     } catch (error) {

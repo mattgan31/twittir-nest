@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -40,6 +41,13 @@ export class PostsController {
   public async getPostById(@Param('id', ParseIntPipe) id: number) {
     return this.postService.getPostById(id);
   }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('posts/:id')
+  public async deletePostById(@Param('id', ParseIntPipe) id: number) {
+    return this.postService.deletePostById(id);
+  }
+
 
   @UseGuards(AuthGuard('jwt'))
   @Get('posts/user/:id')
