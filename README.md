@@ -51,12 +51,79 @@ $ yarn run start:prod
 # unit tests
 $ yarn run test
 
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+```sh
+# POST | localhost:3001/api/login
+{
+  "username": [your_username],
+  "password": [your_password]
+}
 ```
+
+### Register
+
+```sh
+# POST | localhost:3001/api/register
+{
+  "username": [your_username],
+  "password": [your_password]
+}
+```
+
+### Create Post
+
+```sh
+# POST | localhost:3001/api/posts
+{
+    "post": [post_description]
+}
+```
+
+### Get Posts
+
+```sh
+# GET | localhost:3001/api/posts
+```
+
+### Show Post
+
+```sh
+# GET | localhost:3001/api/posts/[id]
+```
+
+### Create Comment on Post
+
+```sh
+# POST | localhost:3001/api/posts/[postId]/comment
+{
+    "description": "comment_description"
+}
+```
+
+### Create Like on Post
+
+```sh
+# POST | localhost:3001/api/posts/[postId]/like
+```
+
+### Create Like on Comment
+
+```sh
+# POST | localhost:3001/api/comments/[commentId]/like
+```
+
+### Follow user
+
+```sh
+# POST | localhost:3001/api/users/[userId]/follow
+```
+
+### Update Profile Picture
+
+```sh
+# PUT | localhost:3001/api/users/picture
+```
+
+NOTE : For update profile picture you should use form-data in postman with key 'file' then the value you can choose picture file.
 
 ## Support
 
