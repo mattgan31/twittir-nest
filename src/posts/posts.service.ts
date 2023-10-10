@@ -12,7 +12,70 @@ import { PrismaService } from '../prisma/prisma.service';
 export class PostsService {
   constructor(private prisma: PrismaService) { }
 
-  public async findAll(): Promise<{ data: PostInterface[] }> {
+  // Private Function
+  private async formattingPosts(posts: any) {
+    const formattedPosts: PostInterface[] = posts.map((post: any) => {
+      const comments: CommentInterface[] =
+        post.comments && post.comments.length > 0
+          ? post.comments.map((comment) => ({
+            id: comment.id,
+            description: comment.description,
+            createdAt: comment.createdAt,
+            user: {
+              id: comment.user.id,
+              username: comment.user.username,
+              fullname: comment.user.fullname,
+              profile_picture: comment.user.profilePicture,
+            },
+            // Check if comment has likes
+            ...(comment.likes &&
+              comment.likes.length > 0 && {
+              likes: comment.likes.map((like) => ({
+                id: like.id,
+                user: {
+                  id: like.user.id,
+                  username: like.user.username,
+                  profile_picture: like.user.profilePicture,
+                },
+              })),
+            }),
+          }))
+          : [];
+
+      const likes: LikesInterface[] =
+        post.likes && post.likes.length > 0
+          ? post.likes.map((like) => ({
+            id: like.id,
+            user: {
+              id: like.user.id,
+              username: like.user.username,
+              profile_picture: like.user.profilePicture,
+            },
+          }))
+          : [];
+
+      return {
+        id: post.id,
+        post: post.post,
+        createdAt: post.createdAt,
+        user: {
+          id: post.user.id,
+          username: post.user.username,
+          fullname: post.user.fullname,
+          profile_picture: post.user.profilePicture,
+        },
+        likes,
+        comments,
+        // Add other properties from the related entity as needed
+        // For example: likes: post.likes,
+      };
+    });
+    return formattedPosts;
+  }
+
+  // Public Function
+
+  public async findAll() {
     try {
       const posts = await this.prisma.post.findMany({
         include: {
@@ -31,60 +94,7 @@ export class PostsService {
         throw new NotFoundException('Posts is not available');
       }
 
-      const formattedPosts: PostInterface[] = posts.map((post) => {
-        const comments: CommentInterface[] =
-          post.comments && post.comments.length > 0
-            ? post.comments.map((comment) => ({
-              id: comment.id,
-              description: comment.description,
-              createdAt: comment.createdAt,
-              user: {
-                id: comment.user.id,
-                username: comment.user.username,
-                profile_picture: comment.user.profilePicture,
-              },
-              // Check if comment has likes
-              ...(comment.likes &&
-                comment.likes.length > 0 && {
-                likes: comment.likes.map((like) => ({
-                  id: like.id,
-                  user: {
-                    id: like.user.id,
-                    username: like.user.username,
-                    profile_picture: like.user.profilePicture,
-                  },
-                })),
-              }),
-            }))
-            : [];
-
-        const likes: LikesInterface[] =
-          post.likes && post.likes.length > 0
-            ? post.likes.map((like) => ({
-              id: like.id,
-              user: {
-                id: like.user.id,
-                username: like.user.username,
-                profile_picture: like.user.profilePicture,
-              },
-            }))
-            : [];
-
-        return {
-          id: post.id,
-          post: post.post,
-          createdAt: post.createdAt,
-          user: {
-            id: post.user.id,
-            username: post.user.username,
-            profile_picture: post.user.profilePicture,
-          },
-          likes,
-          comments,
-          // Add other properties from the related entity as needed
-          // For example: likes: post.likes,
-        };
-      });
+      const formattedPosts = await this.formattingPosts(posts);
 
       return { data: formattedPosts };
     } catch (error) {
@@ -101,9 +111,7 @@ export class PostsService {
       const newPost = await this.prisma.post.create({
         data: {
           post,
-          user,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          userId: user.id,
         },
       });
 
@@ -205,60 +213,7 @@ export class PostsService {
         throw new NotFoundException('Posts is not available');
       }
 
-      const formattedPosts: PostInterface[] = posts.map((post) => {
-        const comments: CommentInterface[] =
-          post.comments && post.comments.length > 0
-            ? post.comments.map((comment) => ({
-              id: comment.id,
-              description: comment.description,
-              createdAt: comment.createdAt,
-              user: {
-                id: comment.user.id,
-                username: comment.user.username,
-                profile_picture: comment.user.profilePicture,
-              },
-              // Check if comment has likes
-              ...(comment.likes &&
-                comment.likes.length > 0 && {
-                likes: comment.likes.map((like) => ({
-                  id: like.id,
-                  user: {
-                    id: like.user.id,
-                    username: like.user.username,
-                    profile_picture: like.user.profilePicture,
-                  },
-                })),
-              }),
-            }))
-            : [];
-
-        const likes: LikesInterface[] =
-          post.likes && post.likes.length > 0
-            ? post.likes.map((like) => ({
-              id: like.id,
-              user: {
-                id: like.user.id,
-                username: like.user.username,
-                profile_picture: like.user.profilePicture,
-              },
-            }))
-            : [];
-
-        return {
-          id: post.id,
-          post: post.post,
-          createdAt: post.createdAt,
-          user: {
-            id: post.user.id,
-            username: post.user.username,
-            profile_picture: post.user.profilePicture,
-          },
-          likes,
-          comments,
-          // Add other properties from the related entity as needed
-          // For example: likes: post.likes,
-        };
-      });
+      const formattedPosts = await this.formattingPosts(posts);
 
       return { data: formattedPosts };
     } catch (error) {
@@ -309,6 +264,7 @@ export class PostsService {
               user: {
                 id: comment.user.id,
                 username: comment.user.username,
+                fullname: comment.user.fullname,
                 profile_picture: comment.user.profilePicture,
               },
               // Check if comment has likes
@@ -345,6 +301,7 @@ export class PostsService {
           user: {
             id: post.user.id,
             username: post.user.username,
+            fullname: post.user.fullname,
             profile_picture: post.user.profilePicture,
           },
           likes,
@@ -363,17 +320,20 @@ export class PostsService {
   // Comment session
   public async createComment(comment: string, user: any, postId: number) {
     const post = await this.prisma.post.findUnique({ where: { id: postId } });
+
+    if (!post) {
+      throw new NotFoundException(`Post with id ${postId} is not found`)
+    }
+
     try {
       const newComment = await this.prisma.comment.create({
         data: {
           postId,
           description: comment,
           userId: user.id,
-          createdAt: new Date(),
-          updatedAt: new Date(),
         },
       });
-      return newComment;
+      return { data: newComment };
     } catch (error) {
       throw error;
     }
@@ -435,7 +395,7 @@ export class PostsService {
         where: { userId: user.id, commentId },
       });
 
-      if (!postIsLikedByUser) {
+      if (postIsLikedByUser.length === 0) {
         await this.prisma.like.create({
           data: {
             commentId,
@@ -450,7 +410,7 @@ export class PostsService {
         await this.prisma.like.deleteMany({
           where: {
             commentId,
-            userId: user,
+            userId: user.id,
           },
         });
 

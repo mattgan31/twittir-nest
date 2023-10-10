@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Put,
   Query,
@@ -39,7 +40,7 @@ export class UserController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('users/:id')
-  public async getUserById(@Param('id') id: number) {
+  public async getUserById(@Param('id', ParseIntPipe) id: number) {
     return this.userService.getUserById(id);
   }
 

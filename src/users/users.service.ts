@@ -56,32 +56,39 @@ export class UserService {
   }
 
   public async register(user: any) {
-    if (!user.password || !user.username) {
-      throw new BadRequestException('Username or Password is required');
+
+    try {
+      if (!user.password || !user.username || !user.fullname) {
+        throw new BadRequestException('Username or Password is required');
+      }
+
+      const isUserUnavailable = await this.prisma.user.findUnique({
+        where: { username: user.username },
+      });
+
+      if (isUserUnavailable) {
+        throw new ConflictException('Username is unavailable');
+      }
+
+      const hashPassword = await Bcrypt.hash(user.password, 10);
+
+      const newUser = await this.prisma.user.create({
+        data: {
+          username: user.username,
+          password: hashPassword,
+          fullname: user.fullname,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+
+      const { password, ...result } = newUser;
+      return { data: result };
+    } catch (error) {
+      console.log(error);
+      throw error;
+
     }
-
-    const isUserAvailable = await this.prisma.user.findUnique({
-      where: { username: user.username },
-    });
-
-    if (isUserAvailable) {
-      throw new ConflictException('Username is unavailable');
-    }
-
-    const hashPassword = await Bcrypt.hash(user.password, 10);
-
-    const newUser = await this.prisma.user.create({
-      data: {
-        username: user.username,
-        password: hashPassword,
-        fullname: user.fullname,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    });
-
-    const { ...result } = newUser;
-    return { data: result };
   }
 
   public async getProfile(req: any) {
@@ -103,7 +110,7 @@ export class UserService {
       if (search === '') {
         const userList = [];
 
-        return { users: userList };
+        return { data: userList };
       } else {
         const userList = await this.prisma.user.findMany({
           where: { username: { startsWith: search } },
@@ -120,7 +127,7 @@ export class UserService {
         return { data: userDtos };
       }
     } catch (error) {
-      return error.response;
+      throw error;
     }
   }
 
@@ -136,7 +143,7 @@ export class UserService {
       }
       return updateUser;
     } catch (error) {
-      return error.response;
+      throw error;
     }
   }
 }
