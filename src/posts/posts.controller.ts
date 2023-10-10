@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Req,
   Request,
@@ -36,13 +38,20 @@ export class PostsController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('posts/:id')
-  public async getPostById(@Param('id') id: number) {
+  public async getPostById(@Param('id', ParseIntPipe) id: number) {
     return this.postService.getPostById(id);
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Delete('posts/:id')
+  public async deletePostById(@Param('id', ParseIntPipe) id: number) {
+    return this.postService.deletePostById(id);
+  }
+
+
+  @UseGuards(AuthGuard('jwt'))
   @Get('posts/user/:id')
-  public async getPostByUserId(@Param('id') id: number) {
+  public async getPostByUserId(@Param('id', ParseIntPipe) id: number) {
     return this.postService.getPostByUserId(id)
   }
 
@@ -52,7 +61,7 @@ export class PostsController {
   public async createComment(
     @Body('description') comment: string,
     @Request() req: any,
-    @Param('id') postId: number,
+    @Param('id', ParseIntPipe) postId: number,
   ) {
     const { user } = req;
     return this.postService.createComment(comment, user, postId);
@@ -62,7 +71,7 @@ export class PostsController {
   @UseGuards(AuthGuard('jwt'))
   @Post('posts/:id/like')
   public async likePost(
-    @Param('id') postId: number,
+    @Param('id', ParseIntPipe) postId: number,
     @Request() req: any,
   ) {
     const { user } = req;
@@ -72,7 +81,7 @@ export class PostsController {
   @UseGuards(AuthGuard('jwt'))
   @Post('comments/:id/like')
   public async likeComment(
-    @Param('id') commentId: number,
+    @Param('id', ParseIntPipe) commentId: number,
     @Request() req: any,
   ) {
     const { user } = req;

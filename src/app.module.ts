@@ -1,26 +1,35 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { GlobalModule } from './global/global.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { RelationshipController } from './relationship/relationship.controller';
-import { RelationshipService } from './relationship/relationship.service';
+import { PrismaService } from './prisma/prisma.service';
+import { UserService } from './users/users.service';
+import { UserController } from './users/users.controller';
+import { UploadMulter } from './multer/multer';
+import { MulterModule } from '@nestjs/platform-express';
+import { PassportModule } from '@nestjs/passport';
+import { JwtModule } from '@nestjs/jwt';
+import { LocalGuard } from './auth/local/local.guard';
+import { PostsController } from './posts/posts.controller';
+import { PostsService } from './posts/posts.service';
+import { JwtGuard } from './auth/jwt/jwt.guard';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'alam',
-      database: 'twittir_nest',
-      entities: ['dist/output/entities/*.js'],
-      autoLoadEntities: true,
+    MulterModule.register(UploadMulter.MulterOption()),
+    PassportModule,
+    JwtModule.register({
+      secret: 's3kret',
+      signOptions: {
+        expiresIn: '2d',
+      },
     }),
-    GlobalModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [UserController, PostsController],
+  providers: [
+    PrismaService,
+    UserService,
+    PostsService,
+    UploadMulter,
+    LocalGuard,
+    JwtGuard,
+  ],
 })
 export class AppModule { }
