@@ -38,12 +38,19 @@ export class RelationshipService {
                 return {
                     message: `You are followed ${otherUser.username}`
                 }
-            } else {
-                await this.prisma.relationship.deleteMany({ where: { followerId: mineUser.id, followingId: otherUser.id } })
+            } else if (isMineFollowingThisUser.deleted === false) {
+                await this.prisma.relationship.updateMany({ data: { deleted: true }, where: { followerId: mineUser.id, followingId: otherUser.id } })
                 return {
-                    message: `You are unfollow ${otherUser.username}`
+                    message: `You are unfollowed ${otherUser.username}`
+                }
+            } else if (isMineFollowingThisUser.deleted === true) {
+                await this.prisma.relationship.updateMany({ data: { deleted: false }, where: { followerId: mineUser.id, followingId: otherUser.id } })
+                return {
+                    message: `You are followed ${otherUser.username}`
                 }
             }
+
+
         } catch (error) {
             return error.response;
         }
