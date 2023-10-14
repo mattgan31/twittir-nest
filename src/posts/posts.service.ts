@@ -161,6 +161,7 @@ export class PostsService {
           createdAt: comment.createdAt,
           user: {
             id: comment.user.id,
+            fullname: comment.user.fullname,
             username: comment.user.username,
           },
           ...(comment.likes &&
@@ -169,6 +170,7 @@ export class PostsService {
               id: like.id,
               user: {
                 id: like.user.id,
+                fullname: like.user.fullname,
                 username: like.user.username,
                 profile_picture: like.user.profilePicture,
               },
@@ -184,6 +186,7 @@ export class PostsService {
             user: {
               id: like.user.id,
               username: like.user.username,
+              fullname: like.user.fullname,
               profile_picture: like.user.profilePicture,
             },
           }))
@@ -196,6 +199,7 @@ export class PostsService {
         user: {
           id: post.user.id,
           username: post.user.username,
+          fullname: post.user.fullname,
           profile_picture: post.user.profilePicture,
         },
         comments,
@@ -290,6 +294,7 @@ export class PostsService {
                   user: {
                     id: like.user.id,
                     username: like.user.username,
+                    fullname: like.user.fullname,
                     profile_picture: like.user.profilePicture,
                   },
                 })),
@@ -304,6 +309,7 @@ export class PostsService {
               user: {
                 id: like.user.id,
                 username: like.user.username,
+                fullname: like.user.fullname,
                 profile_picture: like.user.profilePicture,
               },
             }))
