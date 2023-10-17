@@ -146,4 +146,24 @@ export class UserService {
       throw error;
     }
   }
+
+  public async updateUserProfile(payload: any, req: any) {
+    try {
+      const { user } = req;
+      const { fullname, bio } = payload;
+      if (!fullname || !bio) {
+        throw new BadRequestException();
+      }
+      const updateProfile = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { fullname: fullname, bio: bio, updatedAt: new Date() }
+      });
+
+      const { password, ...result } = updateProfile;
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
