@@ -12,15 +12,33 @@ import {
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { AuthGuard } from '@nestjs/passport';
+import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
 
 @Controller('api')
 export class PostsController {
-  constructor(private readonly postService: PostsService) { }
+  constructor(
+    private readonly postService: PostsService,
+    @InjectRedis() private readonly redis: Redis,
+  ) { }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('posts')
   public async getPosts() {
-    return this.postService.findAll();
+    try {
+      const redisData = await this.redis.get('AllPosts')
+
+      if (redisData) {
+        return { data: JSON.parse(redisData) };
+      } else {
+        const data = await this.postService.findAll();
+
+        const jsonString = JSON.stringify(data.data)
+        await this.redis.set('AllPosts', jsonString)
+        return data;
+      }
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   @UseGuards(AuthGuard('jwt'))

@@ -7,10 +7,14 @@ import { PostInterface } from './posts.interface';
 import { CommentInterface } from './comments/comments.interface';
 import { LikesInterface } from './likes/likes.interface';
 import { PrismaService } from '../prisma/prisma.service';
+import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
 
 @Injectable()
 export class PostsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    @InjectRedis() private readonly redis: Redis,
+  ) { }
 
   // Private Function
   private async formattingPosts(posts: any) {
@@ -340,7 +344,7 @@ export class PostsService {
 
   public async deletePostById(postId: number) {
     try {
-      const post = await this.prisma.post.findUnique({ where: { id: postId } });
+      const post = await this.prisma.post.findUnique({ where: { id: postId, deleted: false } });
 
       if (!post) {
         throw new NotFoundException(`Post with id ${postId} is not found`)
@@ -348,7 +352,9 @@ export class PostsService {
 
       const deletedPost = await this.prisma.post.update({ data: { deleted: true }, where: { id: postId } });
 
-      return { data: deletedPost };
+      await this.redis.del("AllPosts")
+      await this.redis.del(`Post@${postId}`)
+      return { message: 'Data is successfully deleted' };
     } catch (error) {
       throw error;
     }
