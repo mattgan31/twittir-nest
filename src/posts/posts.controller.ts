@@ -57,7 +57,17 @@ export class PostsController {
   @UseGuards(AuthGuard('jwt'))
   @Get('posts/:id')
   public async getPostById(@Param('id', ParseIntPipe) id: number) {
-    return this.postService.getPostById(id);
+    const redisData = await this.redis.get('Post@7')
+
+    if (redisData) {
+      return { data: JSON.parse(redisData) };
+    } else {
+      const data = await this.postService.getPostById(id);
+
+      const jsonString = JSON.stringify(data.data)
+      await this.redis.set(`Post@${id}`, jsonString)
+      return data;
+    }
   }
 
   @UseGuards(AuthGuard('jwt'))
