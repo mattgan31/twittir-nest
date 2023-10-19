@@ -83,8 +83,9 @@ export class PostsController {
 
   @UseGuards(AuthGuard('jwt'))
   @Delete('posts/:id')
-  public async deletePostById(@Param('id', ParseIntPipe) id: number) {
-    return this.postService.deletePostById(id);
+  public async deletePostById(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    const { user } = req;
+    return this.postService.deletePostById(id, user);
   }
 
 
