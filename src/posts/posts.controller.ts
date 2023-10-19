@@ -12,15 +12,33 @@ import {
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { AuthGuard } from '@nestjs/passport';
+import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
 
 @Controller('api')
 export class PostsController {
-  constructor(private readonly postService: PostsService) { }
+  constructor(
+    private readonly postService: PostsService,
+    @InjectRedis() private readonly redis: Redis,
+  ) { }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('posts')
   public async getPosts() {
-    return this.postService.findAll();
+    try {
+      const redisData = await this.redis.get('posts:all')
+
+      if (redisData) {
+        return { data: JSON.parse(redisData) };
+      } else {
+        const data = await this.postService.findAll();
+
+        const jsonString = JSON.stringify(data.data)
+        await this.redis.set('posts:all', jsonString)
+        return data;
+      }
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -33,26 +51,59 @@ export class PostsController {
   @UseGuards(AuthGuard('jwt'))
   @Get('posts/followed')
   public async getPostFollowedByUser(@Req() req: any) {
-    return this.postService.getPostFollowedByUser(req.user);
+
+    const redisData = await this.redis.get(`posts:followed_user:${req.user.id}`)
+
+    if (redisData) {
+      return { data: JSON.parse(redisData) };
+    } else {
+      const data = await this.postService.getPostFollowedByUser(req.user);
+
+      const jsonString = JSON.stringify(data.data)
+      await this.redis.set(`posts:followed_user:${req.user.id}`, jsonString)
+      return data;
+    }
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('posts/:id')
   public async getPostById(@Param('id', ParseIntPipe) id: number) {
-    return this.postService.getPostById(id);
+    const redisData = await this.redis.get(`post:${id}`)
+
+    if (redisData) {
+      return { data: JSON.parse(redisData) };
+    } else {
+      const data = await this.postService.getPostById(id);
+
+      const jsonString = JSON.stringify(data.data)
+      await this.redis.set(`post:${id}`, jsonString)
+      return data;
+    }
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Delete('posts/:id')
-  public async deletePostById(@Param('id', ParseIntPipe) id: number) {
-    return this.postService.deletePostById(id);
+  public async deletePostById(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    const { user } = req;
+    return this.postService.deletePostById(id, user);
   }
 
 
   @UseGuards(AuthGuard('jwt'))
   @Get('posts/user/:id')
   public async getPostByUserId(@Param('id', ParseIntPipe) id: number) {
-    return this.postService.getPostByUserId(id)
+
+    const redisData = await this.redis.get(`posts:user:${id}`)
+
+    if (redisData) {
+      return { data: JSON.parse(redisData) };
+    } else {
+      const data = await this.postService.getPostByUserId(id);
+
+      const jsonString = JSON.stringify(data.data)
+      await this.redis.set(`posts:user:${id}`, jsonString)
+      return data;
+    }
   }
 
   // Comment session
