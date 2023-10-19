@@ -25,7 +25,7 @@ export class PostsController {
   @Get('posts')
   public async getPosts() {
     try {
-      const redisData = await this.redis.get('AllPosts')
+      const redisData = await this.redis.get('posts:all')
 
       if (redisData) {
         return { data: JSON.parse(redisData) };
@@ -33,7 +33,7 @@ export class PostsController {
         const data = await this.postService.findAll();
 
         const jsonString = JSON.stringify(data.data)
-        await this.redis.set('AllPosts', jsonString)
+        await this.redis.set('posts:all', jsonString)
         return data;
       }
     } catch (error) {
@@ -51,13 +51,24 @@ export class PostsController {
   @UseGuards(AuthGuard('jwt'))
   @Get('posts/followed')
   public async getPostFollowedByUser(@Req() req: any) {
-    return this.postService.getPostFollowedByUser(req.user);
+
+    const redisData = await this.redis.get(`posts:followed_user:${req.user.id}`)
+
+    if (redisData) {
+      return { data: JSON.parse(redisData) };
+    } else {
+      const data = await this.postService.getPostFollowedByUser(req.user);
+
+      const jsonString = JSON.stringify(data.data)
+      await this.redis.set(`posts:followed_user:${req.user.id}`, jsonString)
+      return data;
+    }
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('posts/:id')
   public async getPostById(@Param('id', ParseIntPipe) id: number) {
-    const redisData = await this.redis.get('Post@7')
+    const redisData = await this.redis.get(`post:${id}`)
 
     if (redisData) {
       return { data: JSON.parse(redisData) };
@@ -65,7 +76,7 @@ export class PostsController {
       const data = await this.postService.getPostById(id);
 
       const jsonString = JSON.stringify(data.data)
-      await this.redis.set(`Post@${id}`, jsonString)
+      await this.redis.set(`post:${id}`, jsonString)
       return data;
     }
   }
@@ -80,7 +91,18 @@ export class PostsController {
   @UseGuards(AuthGuard('jwt'))
   @Get('posts/user/:id')
   public async getPostByUserId(@Param('id', ParseIntPipe) id: number) {
-    return this.postService.getPostByUserId(id)
+
+    const redisData = await this.redis.get(`posts:user:${id}`)
+
+    if (redisData) {
+      return { data: JSON.parse(redisData) };
+    } else {
+      const data = await this.postService.getPostByUserId(id);
+
+      const jsonString = JSON.stringify(data.data)
+      await this.redis.set(`posts:user:${id}`, jsonString)
+      return data;
+    }
   }
 
   // Comment session

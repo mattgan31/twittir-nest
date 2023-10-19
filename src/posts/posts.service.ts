@@ -134,7 +134,7 @@ export class PostsService {
         }
       });
 
-      await this.redis.del('AllPosts');
+      await this.redis.del('posts:all');
 
       return { data: newPost };
     } catch (error) {
@@ -354,8 +354,8 @@ export class PostsService {
 
       const deletedPost = await this.prisma.post.update({ data: { deleted: true }, where: { id: postId } });
 
-      await this.redis.del("AllPosts")
-      await this.redis.del(`Post@${postId}`)
+      await this.redis.del("posts:all", `post:${postId}`)
+
       return { message: 'Data is successfully deleted' };
     } catch (error) {
       throw error;
@@ -387,8 +387,7 @@ export class PostsService {
           updatedAt: true,
         }
       });
-      await this.redis.del(`Post@${postId}`);
-      await this.redis.del(`AllPosts`);
+      await this.redis.del(`post:${postId}`, `posts:all`);
       return { data: newComment };
     } catch (error) {
       throw error;
@@ -416,6 +415,16 @@ export class PostsService {
           },
         });
 
+        // Get Keys Redis
+        const keysToDelete = await this.redis.keys("posts:followed_user:*");
+
+        // Hapus kunci-kunci yang ditemukan
+        if (keysToDelete.length > 0) {
+          await this.redis.del(...keysToDelete);
+        }
+
+        await this.redis.del(`posts:all`, `post:${postId}`, `posts:user:${userId}`);
+
         return {
           message: `You are liked post with ${post.id} ID`,
         };
@@ -428,6 +437,15 @@ export class PostsService {
           },
         });
 
+        // Get Keys Redis
+        const keysToDelete = await this.redis.keys("posts:followed_user:*");
+
+        // Hapus kunci-kunci yang ditemukan
+        if (keysToDelete.length > 0) {
+          await this.redis.del(...keysToDelete);
+        }
+
+        await this.redis.del(`posts:all`, `post:${postId}`, `posts:user:${userId}`);
         return {
           message: `You are unliked post with ${post.id} ID`,
         };
@@ -440,6 +458,15 @@ export class PostsService {
           },
         });
 
+        // Get Keys Redis
+        const keysToDelete = await this.redis.keys("posts:followed_user:*");
+
+        // Hapus kunci-kunci yang ditemukan
+        if (keysToDelete.length > 0) {
+          await this.redis.del(...keysToDelete);
+        }
+
+        await this.redis.del(`posts:all`, `post:${postId}`, `posts:user:${userId}`);
         return {
           message: `You are liked post with ${post.id} ID`,
         };
@@ -473,6 +500,16 @@ export class PostsService {
           },
         });
 
+        // Get Keys Redis
+        const keysToDelete = await this.redis.keys("posts:followed_user:*");
+
+        // Hapus kunci-kunci yang ditemukan
+        if (keysToDelete.length > 0) {
+          await this.redis.del(...keysToDelete);
+        }
+
+        await this.redis.del(`posts:all`, `post:${comment.postId}`, `posts:user:${userId}`);
+
         return {
           message: `You are liked comment with ${comment.id} ID`,
         };
@@ -485,6 +522,16 @@ export class PostsService {
           },
         });
 
+        // Get Keys Redis
+        const keysToDelete = await this.redis.keys("posts:followed_user:*");
+
+        // Hapus kunci-kunci yang ditemukan
+        if (keysToDelete.length > 0) {
+          await this.redis.del(...keysToDelete);
+        }
+
+        await this.redis.del(`posts:all`, `post:${comment.postId}`, `posts:user:${userId}`);
+
         return {
           message: `You are unliked comment with ${comment.id} ID`,
         };
@@ -496,6 +543,16 @@ export class PostsService {
             userId,
           },
         });
+
+        // Get Keys Redis
+        const keysToDelete = await this.redis.keys("posts:followed_user:*");
+
+        // Hapus kunci-kunci yang ditemukan
+        if (keysToDelete.length > 0) {
+          await this.redis.del(...keysToDelete);
+        }
+
+        await this.redis.del(`posts:all`, `post:${comment.postId}`, `posts:user:${userId}`);
 
         return {
           message: `You are liked comment with ${comment.id} ID`,
