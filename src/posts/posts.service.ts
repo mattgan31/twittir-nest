@@ -344,7 +344,7 @@ export class PostsService {
     }
   }
 
-  public async deletePostById(postId: number) {
+  public async deletePostById(postId: number, user: any) {
     try {
       const post = await this.prisma.post.findUnique({ where: { id: postId, deleted: false } });
 
@@ -352,9 +352,15 @@ export class PostsService {
         throw new NotFoundException(`Post with id ${postId} is not found`)
       }
 
-      const deletedPost = await this.prisma.post.update({ data: { deleted: true }, where: { id: postId } });
+      await this.prisma.post.update({ data: { deleted: true }, where: { id: postId, userId: user.id } });
 
-      await this.redis.del("posts:all", `post:${postId}`)
+      const keysToDelete = await this.redis.keys('posts:followed_user:*')
+
+      if (keysToDelete.length > 0) {
+        await this.redis.del(...keysToDelete);
+      }
+
+      await this.redis.del(`posts:all`, `post:${postId}`, `posts:user:${user.Id}`);
 
       return { message: 'Data is successfully deleted' };
     } catch (error) {
