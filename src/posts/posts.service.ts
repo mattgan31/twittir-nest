@@ -134,6 +134,8 @@ export class PostsService {
         }
       });
 
+      await this.redis.del('AllPosts');
+
       return { data: newPost };
     } catch (error) {
       throw error;
@@ -385,6 +387,8 @@ export class PostsService {
           updatedAt: true,
         }
       });
+      await this.redis.del(`Post@${postId}`);
+      await this.redis.del(`AllPosts`);
       return { data: newComment };
     } catch (error) {
       throw error;
