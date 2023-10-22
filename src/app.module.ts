@@ -10,9 +10,20 @@ import { LocalGuard } from './auth/local/local.guard';
 import { PostsController } from './posts/posts.controller';
 import { PostsService } from './posts/posts.service';
 import { JwtGuard } from './auth/jwt/jwt.guard';
+import { RelationshipController } from './relationship/relationship.controller';
+import { RelationshipService } from './relationship/relationship.service';
+import { RedisModule } from '@nestjs-modules/ioredis';
+import { RedisService } from './redis/redis.service';
 
 @Module({
   imports: [
+    RedisModule.forRootAsync({
+      useFactory: () => ({
+        config: {
+          url: 'redis://localhost:6379',
+        },
+      }),
+    }),
     MulterModule.register(UploadMulter.MulterOption()),
     PassportModule,
     JwtModule.register({
@@ -22,11 +33,12 @@ import { JwtGuard } from './auth/jwt/jwt.guard';
       },
     }),
   ],
-  controllers: [UserController, PostsController],
+  controllers: [UserController, PostsController, RelationshipController],
   providers: [
     PrismaService,
     UserService,
     PostsService,
+    RelationshipService,
     UploadMulter,
     LocalGuard,
     JwtGuard,

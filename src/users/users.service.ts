@@ -58,8 +58,12 @@ export class UserService {
   public async register(user: any) {
 
     try {
-      if (!user.password || !user.username || !user.fullname) {
+      if (!user.password || !user.username) {
         throw new BadRequestException('Username or Password is required');
+      }
+
+      if(!user.fullname){
+        throw new BadRequestException('Fullname is required');
       }
 
       const isUserUnavailable = await this.prisma.user.findUnique({
@@ -142,6 +146,26 @@ export class UserService {
         throw new BadRequestException();
       }
       return updateUser;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async updateUserProfile(payload: any, req: any) {
+    try {
+      const { user } = req;
+      const { fullname, bio } = payload;
+      if (!fullname || !bio) {
+        throw new BadRequestException();
+      }
+      const updateProfile = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { fullname: fullname, bio: bio, updatedAt: new Date() }
+      });
+
+      const { password, ...result } = updateProfile;
+
+      return result;
     } catch (error) {
       throw error;
     }

@@ -61,4 +61,10 @@ export class UserController {
   ) {
     return this.userService.updateProfilePicture(picture, req);
   }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Put('users/update')
+  public async updateUserProfile(@Body() payload: any, @Request() req: any) {
+    return this.userService.updateUserProfile(payload, req);
+  }
 }
